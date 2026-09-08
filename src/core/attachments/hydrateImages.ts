@@ -37,22 +37,3 @@ export async function hydrateImages(
     }
   }
 }
-
-/** Every attachment hash the given conversations still reference. */
-export function collectReferencedHashes(
-  conversations: readonly { messages?: ChatMessage[] }[],
-): Set<string> {
-  const hashes = new Set<string>();
-
-  for (const conversation of conversations) {
-    for (const message of conversation.messages ?? []) {
-      for (const image of message.images ?? []) {
-        if (image.hash) {
-          hashes.add(image.hash);
-        }
-      }
-    }
-  }
-
-  return hashes;
-}

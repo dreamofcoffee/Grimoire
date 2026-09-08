@@ -31,7 +31,7 @@ import {
 } from './app/execution/local/LocalShellExecution';
 import { DEFAULT_GRIMOIRE_SETTINGS } from './app/settings/defaultSettings';
 import { SharedStorageService } from './app/storage/SharedStorageService';
-import { collectReferencedHashes, hydrateImageAttachments } from './core/attachments/hydrateImages';
+import { hydrateImageAttachments } from './core/attachments/hydrateImages';
 import type { UnreadableConversation } from './core/bootstrap/SessionStorage';
 import {
   applyAssistantResponseMetadataToMessages,
@@ -1264,7 +1264,9 @@ export default class GrimoirePlugin extends Plugin {
 
     await this.storage.sessions.deleteMetadata(id);
     this.historyHydration.delete(id);
-    await this.collectAttachmentGarbage();
+    // Shared attachment bytes may still belong to a draft, a queued turn, or a
+    // conversation this build cannot read. Deletion has no complete root set
+    // for garbage collection, so retain the bytes rather than risk data loss.
 
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
@@ -1375,23 +1377,6 @@ export default class GrimoirePlugin extends Plugin {
       conversation,
       conversationMetadataFields(safeUpdates),
     );
-  }
-
-  /**
-   * Drops stored attachment files nothing references any more.
-   *
-   * The reachable set is read from metadata rather than from the in-memory
-   * conversations: transcript hydration replaces a conversation's messages with
-   * provider-derived ones that carry no hash, so memory is not a complete
-   * record of what is still referenced.
-   */
-  private async collectAttachmentGarbage(): Promise<void> {
-    try {
-      const metadata = await this.storage.sessions.listMetadata();
-      await this.storage.attachments.collectGarbage(collectReferencedHashes(metadata));
-    } catch {
-      // Reclaiming disk is never worth failing a delete over.
-    }
   }
 
   /**

@@ -106,11 +106,9 @@ describe('chat execution coordinator', () => {
         id: `assistant-${started.runId}`,
         role: 'assistant',
         content: 'Botanically, yes.',
-        // The provider's own name for the answer, which is what a rewind or a
-        // fork resumes at. A second question, on the field that asks it.
-        assistantMessageId: `result-${started.runId}`,
       }),
     ]);
+    expect((await storedMessages(harness)).at(-1)?.assistantMessageId).toBeUndefined();
   });
 
   describe('the session binding', () => {
@@ -702,7 +700,10 @@ describe('chat execution coordinator', () => {
       nextLeaseId: () => lifecycleLeaseId(opaque('lease', 9)),
       assistantMessageIdForRun: forRunId => `assistant-${forRunId}`,
     });
-    const ticket = await coordinator.submitTurn(turnCommand());
+    const turnMetadata = jest.fn()
+      .mockReturnValueOnce({ assistantMessageId: 'native-answer' })
+      .mockReturnValue({});
+    const ticket = await coordinator.submitTurn(turnCommand({ turnMetadata }));
     const started = await ticket.started;
     harness.backend.emit(started.runId, {
       kind: 'output-delta',
@@ -727,11 +728,61 @@ describe('chat execution coordinator', () => {
 
     await coordinator.retryPersistence(CONVERSATION_ID);
 
+    expect(turnMetadata).toHaveBeenCalledTimes(1);
+    const record = await harness.conversations.read(CONVERSATION_ID);
+    expect(record.kind === 'present' && record.metadata.messages?.at(-1)?.assistantMessageId).toBe('native-answer');
     expect(coordinator.getProjection(CONVERSATION_ID)?.turns[0]?.persistence).toBe('saved');
     await expect(ticket.completion).resolves.toEqual(expect.objectContaining({
       runId: started.runId,
     }));
     coordinator.dispose();
+  });
+
+  it('honors Stop while opening a session without dispatching a run', async () => {
+    const harness = await createHarness();
+    let release!: () => void;
+    let entered!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const opening = new Promise<void>(resolve => { entered = resolve; });
+    const create = harness.registry.createSession.bind(harness.registry);
+    jest.spyOn(harness.registry, 'createSession').mockImplementation(async command => {
+      entered();
+      await gate;
+      return create(command);
+    });
+    const start = jest.spyOn(harness.registry, 'startRun');
+    const ticket = await harness.coordinator.submitTurn(turnCommand());
+    const rejected = ticket.completion.catch(error => error as Error);
+    await opening;
+    await harness.coordinator.cancelActive(CONVERSATION_ID);
+    release();
+    expect(await rejected).toEqual(expect.objectContaining({ message: 'Chat turn was cancelled before dispatch.' }));
+    expect(start).not.toHaveBeenCalled();
+    harness.coordinator.dispose();
+  });
+
+  it('forwards Stop requested while the kernel is admitting a run', async () => {
+    const harness = await createHarness();
+    let release!: () => void;
+    let entered!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const admitting = new Promise<void>(resolve => { entered = resolve; });
+    const start = harness.registry.startRun.bind(harness.registry);
+    jest.spyOn(harness.registry, 'startRun').mockImplementation(async (session, request) => {
+      entered();
+      await gate;
+      return start(session, request);
+    });
+    const cancel = jest.spyOn(harness.registry, 'cancelRun');
+    const ticket = await harness.coordinator.submitTurn(turnCommand());
+    await admitting;
+    await harness.coordinator.cancelActive(CONVERSATION_ID);
+    expect(cancel).not.toHaveBeenCalled();
+    release();
+    const started = await ticket.started;
+    await waitUntil(() => cancel.mock.calls.length > 0, 'cancellation forwarded');
+    expect(cancel).toHaveBeenCalledWith(started.runId, { code: 'user' });
+    harness.coordinator.dispose();
   });
 
   it('refuses a conversation this build cannot read, by name', async () => {

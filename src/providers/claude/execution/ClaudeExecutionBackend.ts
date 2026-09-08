@@ -821,6 +821,7 @@ class ClaudeExecutionSession implements ExecutionSession {
   async prepareRun(
     invocation: ClaudeExecutionInvocation,
     run: ClaudeExecutionRun,
+    resumeCheckpoint?: string,
   ): Promise<void> {
     if (this.preparingRun && this.preparingRun !== run) {
       throw new ExecutionDispatchError('Claude execution preparation is already active.', true);
@@ -828,7 +829,7 @@ class ClaudeExecutionSession implements ExecutionSession {
     this.preparingRun = run;
     try {
       const restartRequired = this.query !== undefined
-        && this.restartFingerprint !== invocation.restartFingerprint;
+        && (this.restartFingerprint !== invocation.restartFingerprint || resumeCheckpoint !== undefined);
       if ((!this.query || restartRequired) && this.hasLiveNativeTasks()) {
         throw new ExecutionDispatchError(
           'Claude query ownership cannot change while native tasks are active.',
@@ -836,7 +837,7 @@ class ClaudeExecutionSession implements ExecutionSession {
         );
       }
       if (!this.query || restartRequired) {
-        await this.startQuery(invocation, run);
+        await this.startQuery(invocation, run, resumeCheckpoint);
       }
       await this.applyDynamicUpdates(invocation.dynamic ?? {}, run);
     } finally {
@@ -1081,11 +1082,18 @@ class ClaudeExecutionSession implements ExecutionSession {
   private async startQuery(
     invocation: ClaudeExecutionInvocation,
     run: ClaudeExecutionRun,
+    resumeCheckpoint?: string,
   ): Promise<void> {
+    let intent = this.resolveSessionIntent(invocation.session);
+    if (resumeCheckpoint !== undefined) {
+      if (intent.kind === 'new') {
+        throw new ExecutionDispatchError('Claude checkpoint requires a native session.', true);
+      }
+      intent = { ...intent, resumeAt: resumeCheckpoint };
+    }
     await this.closeQuery();
     this.completedTaskIds.clear();
     const channel = new ClaudeExecutionMessageChannel();
-    const intent = this.resolveSessionIntent(invocation.session);
     const sessionRef = intent.kind === 'new'
       ? undefined
       : intent.kind === 'resume'
@@ -2005,7 +2013,7 @@ class ClaudeExecutionRun implements ExecutionRun {
       return;
     }
     try {
-      await this.session.prepareRun(invocation, this);
+      await this.session.prepareRun(invocation, this, this.request.resumeCheckpoint);
       if (this.terminal || this.cancellation) {
         if (!this.terminal) {
           this.finish('cancelled', 'cancellation-confirmed', true);

@@ -667,6 +667,41 @@ describe('ClaudeExecutionBackend', () => {
     expect(forked.getSnapshot().nativeSessionRef).toBe('source-session');
   });
 
+  it.each([false, true])('resumes an explicit execution checkpoint with a warm query: %s', async (warm) => {
+    const fixture = createFixture();
+    const session = await createSession(fixture.backend, 'native-session');
+    if (warm) {
+      const first = collectEvents(session.createRun(request('1', 'default')));
+      await waitFor(() => fixture.query.received.length === 1);
+      fixture.query.emit(resultMessage('message-1', 'done', 'result-1'));
+      await first;
+    }
+    const query = warm ? new FakeQuery() : fixture.query;
+    fixture.factory.nextQuery = query;
+    const events = collectEvents(session.createRun({
+      ...request('2', 'default'),
+      resumeCheckpoint: 'assistant-checkpoint',
+    }));
+    await waitFor(() => query.received.length === 1);
+    expect(fixture.factory.inputs.at(-1)?.nativeSessionRef).toBe('native-session');
+    expect(fixture.factory.inputs.at(-1)?.resumeAt).toBe('assistant-checkpoint');
+    expect(fixture.factory.inputs.at(-1)?.forkSession).toBe(false);
+    expect(fixture.factory.inputs).toHaveLength(warm ? 2 : 1);
+    query.emit(resultMessage('message-1', 'resumed', 'result-2'));
+    expectTerminal(await events, 'succeeded', 'completed');
+  });
+
+  it('rejects a checkpoint without a native session before starting a query', async () => {
+    const fixture = createFixture();
+    const session = await createSession(fixture.backend);
+    const events = await collectEvents(session.createRun({
+      ...request('1', 'default'),
+      resumeCheckpoint: 'assistant-checkpoint',
+    }));
+    expectTerminal(events, 'invalidated', 'pre-dispatch-rejected');
+    expect(fixture.factory.inputs).toHaveLength(0);
+  });
+
   it('rewinds files while quiescent and resumes the next query at the assistant checkpoint', async () => {
     const fixture = createFixture({
       invocations: {

@@ -427,7 +427,6 @@ describe('turn metadata carries the native identities', () => {
     expect(stream.consumeTurnMetadata()).toEqual({
       wasSent: true,
       userMessageId: 'native-message-1',
-      assistantMessageId: 'assistant-1',
     });
   });
 
