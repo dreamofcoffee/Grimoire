@@ -5,12 +5,22 @@ import { Menu, Notice } from 'obsidian';
 
 import { ConversationController, type ConversationControllerDeps } from '@/features/chat/controllers/ConversationController';
 import { ChatState } from '@/features/chat/state/ChatState';
+import { requestTabRename } from '@/features/chat/ui/RenameTabModal';
 import { t } from '@/i18n/i18n';
 import { confirm } from '@/shared/modals/ConfirmModal';
 
 jest.mock('@/shared/modals/ConfirmModal', () => ({
   confirm: jest.fn().mockResolvedValue(true),
 }));
+
+jest.mock('@/features/chat/ui/RenameTabModal', () => ({
+  requestTabRename: jest.fn().mockResolvedValue(null),
+}));
+
+const renameModalMock = requestTabRename as jest.Mock;
+
+/** Lets the dialog's promise and the rename that follows it settle. */
+const flushPromises = () => new Promise(resolve => { setImmediate(resolve); });
 
 const mockNotice = Notice as jest.Mock;
 
@@ -1424,7 +1434,7 @@ describe('ConversationController', () => {
       });
     });
 
-    it('should invoke rename handler from the context menu', () => {
+    it('opens the rename dialog from the context menu, not a field in the row', async () => {
       (deps.plugin.getConversationList as jest.Mock).mockReturnValue([
         { id: 'conv-1', providerId: 'claude', title: 'Test Title', createdAt: 1000, lastResponseAt: 1000, messageCount: 1, preview: 'Preview' },
       ]);
@@ -1441,24 +1451,82 @@ describe('ConversationController', () => {
       const renameItem = menu.items.find(entry => entry.title === 'Rename');
       expect(renameItem).toBeDefined();
 
-      const mockInput = createMockEl();
-      (mockInput).type = '';
-      (mockInput).className = '';
-      (mockInput).value = '';
-      (mockInput).focus = jest.fn();
-      (mockInput).select = jest.fn();
-
-      const titleEl = item.querySelector('.grimoire-history-item-title');
-      if (titleEl) {
-        (titleEl).replaceWith = jest.fn();
-      }
-      const createElSpy = jest.spyOn(item, 'createEl').mockReturnValue(mockInput);
+      const createElSpy = jest.spyOn(item, 'createEl');
+      renameModalMock.mockResolvedValue('A name the reader typed');
 
       renameItem!.clickHandler();
+      await flushPromises();
 
-      expect(createElSpy).toHaveBeenCalledWith('input');
-      expect((mockInput).value).toBe('Test Title');
-      expect(titleEl!.replaceWith).toHaveBeenCalledWith(mockInput);
+      // The row is not where a name is edited any more.
+      expect(createElSpy).not.toHaveBeenCalledWith('input');
+      expect(renameModalMock).toHaveBeenCalledWith(
+        deps.plugin.app,
+        'Test Title',
+        expect.objectContaining({ conversationId: 'conv-1' }),
+      );
+      expect(deps.plugin.renameConversation).toHaveBeenCalledWith('conv-1', 'A name the reader typed', 'manual');
+    });
+
+    it('renames nothing when the dialog is cancelled', async () => {
+      // Cancel used to have no button at all: the field in the row committed on
+      // blur, and the blur the closing menu caused wrote a name nobody typed.
+      (deps.plugin.getConversationList as jest.Mock).mockReturnValue([
+        { id: 'conv-1', providerId: 'claude', title: 'Test Title', createdAt: 1000, lastResponseAt: 1000, messageCount: 1, preview: 'Preview' },
+      ]);
+
+      controller.updateHistoryDropdown();
+
+      const item = getHistoryItem(dropdown, 'conv-1');
+      const renameBtn = item.querySelector('.grimoire-history-rename-btn');
+      renameModalMock.mockResolvedValue(null);
+
+      await renameBtn!._eventListeners!.get('click')![0]({ preventDefault: jest.fn(), stopPropagation: jest.fn() });
+      await flushPromises();
+
+      expect(renameModalMock).toHaveBeenCalled();
+      expect(deps.plugin.renameConversation).not.toHaveBeenCalled();
+    });
+
+    it('does not mark a title manual when the dialog returns the name it was given', async () => {
+      // Opening the dialog and pressing OK on an untouched field is not a
+      // rename, and must not put the manual marker on the row.
+      (deps.plugin.getConversationList as jest.Mock).mockReturnValue([
+        { id: 'conv-1', providerId: 'claude', title: 'Test Title', createdAt: 1000, lastResponseAt: 1000, messageCount: 1, preview: 'Preview' },
+      ]);
+
+      controller.updateHistoryDropdown();
+
+      const item = getHistoryItem(dropdown, 'conv-1');
+      const renameBtn = item.querySelector('.grimoire-history-rename-btn');
+      renameModalMock.mockResolvedValue('Test Title');
+
+      await renameBtn!._eventListeners!.get('click')![0]({ preventDefault: jest.fn(), stopPropagation: jest.fn() });
+      await flushPromises();
+
+      expect(deps.plugin.renameConversation).not.toHaveBeenCalled();
+    });
+
+    it('says so when the rename cannot be saved', async () => {
+      // The field this dialog replaced ran through `runConversationAction` and
+      // showed a notice when the save failed. Awaiting the dialog with `void`
+      // instead left the failure silent and the rejection unhandled.
+      (deps.plugin.getConversationList as jest.Mock).mockReturnValue([
+        { id: 'conv-1', providerId: 'claude', title: 'Test Title', createdAt: 1000, lastResponseAt: 1000, messageCount: 1, preview: 'Preview' },
+      ]);
+      (deps.plugin.renameConversation as jest.Mock).mockRejectedValue(new Error('disk is gone'));
+
+      controller.updateHistoryDropdown();
+
+      const item = getHistoryItem(dropdown, 'conv-1');
+      const renameBtn = item.querySelector('.grimoire-history-rename-btn');
+      renameModalMock.mockResolvedValue('A name the reader typed');
+      mockNotice.mockClear();
+
+      await renameBtn!._eventListeners!.get('click')![0]({ preventDefault: jest.fn(), stopPropagation: jest.fn() });
+      await flushPromises();
+
+      expect(deps.plugin.renameConversation).toHaveBeenCalled();
+      expect(mockNotice).toHaveBeenCalled();
     });
 
     it('should delete conversation and reload active when deleting current conversation', async () => {
