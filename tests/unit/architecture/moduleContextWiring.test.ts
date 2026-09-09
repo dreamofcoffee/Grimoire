@@ -138,7 +138,7 @@ describe('provider module context wiring', () => {
       .filter(path => /refreshModels:\s*\(\)\s*=>/.test(readFileSync(path, 'utf8')))
       .map(path => relative(process.cwd(), path));
 
-    expect(contexts).toHaveLength(10);
+    expect(contexts).toHaveLength(11);
     expect(offenders).toEqual([]);
   });
 

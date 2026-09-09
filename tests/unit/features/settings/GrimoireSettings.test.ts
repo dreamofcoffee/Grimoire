@@ -383,6 +383,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'Gemini CLI (Legacy)',
       'Qwen Code',
       'Devin',
+      'Reasonix',
     ]);
     expect(collectText(settingEl)).not.toContain('Enabled');
     expect(collectText(settingEl)).not.toContain('Disabled');
@@ -402,6 +403,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'gemini',
       'qwen',
       'devin',
+      'reasonix',
     ]);
   });
 
@@ -510,6 +512,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'gemini',
       'qwen',
       'devin',
+      'reasonix',
     ]);
     // Devin lists its session's commands but manages no command file, so it
     // has a commands inventory and no commands manager.
@@ -541,6 +544,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'gemini',
       'qwen',
       'devin',
+      'reasonix',
     ]);
     expect((tab as any).getWorkspaceManagerProviders(providerIds, 'environment')).toEqual([
       '__shared__',

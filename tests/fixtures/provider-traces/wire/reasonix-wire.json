@@ -1,0 +1,953 @@
+{
+  "schemaVersion": 1,
+  "providerId": "reasonix",
+  "kind": "wire-recording",
+  "recordedAgainst": "reasonix v1.38.3",
+  "transport": "stdio JSON-RPC 2.0 (`reasonix acp`)",
+  "coverage": "complete",
+  "cases": [
+    "initialize",
+    "session/new",
+    "session/set_config_option",
+    "session/prompt"
+  ],
+  "sessionUpdatesObserved": [
+    "agent_message_chunk",
+    "available_commands_update",
+    "config_option_update"
+  ],
+  "serverMethodsObserved": [
+    "_reasonix.io/session/status_update",
+    "session/update"
+  ],
+  "payloadPolicy": "Strings over 200 characters are elided: the recording is evidence of protocol shape, not of content.",
+  "exchange": [
+    {
+      "seq": 1,
+      "direction": "client->server",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+          "protocolVersion": 1,
+          "clientCapabilities": {
+            "fs": {
+              "readTextFile": true,
+              "writeTextFile": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": 1,
+          "agentCapabilities": {
+            "loadSession": true,
+            "sessionCapabilities": {
+              "list": {},
+              "resume": {},
+              "close": {},
+              "delete": {}
+            },
+            "promptCapabilities": {
+              "image": false,
+              "audio": false,
+              "embeddedContext": true
+            },
+            "mcpCapabilities": {
+              "http": true,
+              "sse": false
+            },
+            "_meta": {
+              "_reasonix.io/session/status": {
+                "schemaVersion": 1
+              },
+              "_reasonix.io/session/status_update": {
+                "schemaVersion": 1
+              },
+              "reasonix.io": {
+                "sessionSteer": {
+                  "method": "_reasonix.io/session/steer"
+                },
+                "sessionInbox": {
+                  "schemaVersion": 1,
+                  "methods": {
+                    "delete": "_reasonix.io/session/inbox/delete",
+                    "enqueue": "_reasonix.io/session/inbox/enqueue",
+                    "get": "_reasonix.io/session/inbox/get",
+                    "list": "_reasonix.io/session/inbox/list",
+                    "move": "_reasonix.io/session/inbox/move",
+                    "refresh": "_reasonix.io/session/inbox/refresh",
+                    "retry": "_reasonix.io/session/inbox/retry",
+                    "setPaused": "_reasonix.io/session/inbox/setPaused",
+                    "update": "_reasonix.io/session/inbox/update"
+                  }
+                },
+                "sessionReloadExtensions": {
+                  "method": "_reasonix.io/session/reloadExtensions"
+                },
+                "extensionSurface": {
+                  "supported": true,
+                  "schemaVersion": 1
+                }
+              }
+            }
+          },
+          "agentInfo": {
+            "name": "reasonix",
+            "version": "v1.38.3"
+          },
+          "authMethods": [
+            {
+              "id": "reasonix-setup",
+              "name": "Reasonix setup",
+              "description": "Configure Reasonix providers and credentials in a terminal",
+              "type": "terminal",
+              "args": [
+                "setup"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 3,
+      "direction": "client->server",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "session/new",
+        "params": {
+          "cwd": "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z",
+          "mcpServers": []
+        }
+      }
+    },
+    {
+      "seq": 4,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "models": {
+            "availableModels": [
+              {
+                "modelId": "custom-api-z-ai/glm-5.3",
+                "name": "custom-api-z-ai/glm-5.3",
+                "description": "custom-api-z-ai"
+              },
+              {
+                "modelId": "custom-api-z-ai/glm-5.3-flash",
+                "name": "custom-api-z-ai/glm-5.3-flash",
+                "description": "custom-api-z-ai"
+              }
+            ],
+            "currentModelId": "custom-api-z-ai/glm-5.3-flash"
+          },
+          "modes": {
+            "currentModeId": "normal",
+            "availableModes": [
+              {
+                "id": "normal",
+                "name": "Normal",
+                "description": "Work directly and pause when user input is required"
+              },
+              {
+                "id": "plan",
+                "name": "Plan",
+                "description": "Research and propose a plan before making changes"
+              },
+              {
+                "id": "goal",
+                "name": "Goal",
+                "description": "Keep advancing the next prompt as a goal until complete or blocked"
+              }
+            ]
+          },
+          "configOptions": [
+            {
+              "id": "model",
+              "name": "Model",
+              "category": "model",
+              "type": "select",
+              "currentValue": "custom-api-z-ai/glm-5.3-flash",
+              "options": [
+                {
+                  "value": "custom-api-z-ai/glm-5.3",
+                  "name": "custom-api-z-ai/glm-5.3",
+                  "description": "custom-api-z-ai"
+                },
+                {
+                  "value": "custom-api-z-ai/glm-5.3-flash",
+                  "name": "custom-api-z-ai/glm-5.3-flash",
+                  "description": "custom-api-z-ai"
+                }
+              ]
+            },
+            {
+              "id": "effort",
+              "name": "Effort",
+              "category": "thought_level",
+              "type": "select",
+              "currentValue": "auto",
+              "options": [
+                {
+                  "value": "auto",
+                  "name": "Auto"
+                },
+                {
+                  "value": "enabled",
+                  "name": "Enabled"
+                },
+                {
+                  "value": "disabled",
+                  "name": "Disabled"
+                }
+              ]
+            },
+            {
+              "id": "tool_approval",
+              "name": "Tool Approval",
+              "category": "tool_approval",
+              "type": "select",
+              "currentValue": "ask",
+              "options": [
+                {
+                  "value": "ask",
+                  "name": "Ask",
+                  "description": "Ask before permission-gated tool calls"
+                },
+                {
+                  "value": "auto",
+                  "name": "Auto",
+                  "description": "Follow configured permission rules without fallback prompts"
+                },
+                {
+                  "value": "yolo",
+                  "name": "Yolo",
+                  "description": "Approve tool calls except protected decisions"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 5,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "session/update",
+        "params": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "update": {
+            "sessionUpdate": "available_commands_update",
+            "availableCommands": [
+              {
+                "name": "deslop",
+                "description": "Remove conspicuous AI-style filler, formulaic rhetoric, and repetitive prose while preserving meaning and author voice. Use for deslop, humanize, убрать ИИ-паттерны, natural-sounding drafts,… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "english-dev-docs",
+                "description": "Write every shared development artifact in English, whatever language the conversation is in. Trigger on the act of writing, drafting, creating, filing, rewriting, summarizing, or naming any… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "explore",
+                "description": "Explore the codebase in an isolated subagent — wide-net read-only investigation that returns one distilled answer. Best for: 'find all places that...', 'how does X work across the project', … (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "init",
+                "description": "Bootstrap or refresh this project's AGENTS.md — analyze the codebase (structure, build/test commands, architecture, conventions) and write a concise memory file loaded into every future sess… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "install-capability",
+                "description": "Install or uninstall Reasonix MCP servers and skills from a URL, GitHub/raw file, local path/folder, .mcp.json, executable, or package name. Plans with install_source (op=install or op=unins… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "karpathy-guidelines",
+                "description": "Run the karpathy-guidelines skill",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "reasonix-guide",
+                "description": "Troubleshoot and configure Reasonix capabilities: Skills (project/custom/global/builtin priority, discovery dirs), Commands (override order, /dir:file naming), Hooks (11 events, automatic pr… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "research",
+                "description": "Research a question by combining web_fetch + code reading in an isolated subagent. Best for: 'is X supported by lib Y', 'what's the canonical way to do Z', 'compare our impl against the spec'.",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "review",
+                "description": "Review the pending changes (current branch diff by default) in an isolated subagent — flags correctness, security, missing tests, hidden behavior changes; reports a verdict + per-issue file:… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "security-review",
+                "description": "Security-focused review of the current branch diff in an isolated subagent — flags injection/authz/secrets/deserialization/path-traversal/crypto issues, severity-tagged. Read-only.",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "test",
+                "description": "Run the project's test suite, diagnose failures, propose+apply fixes, re-run until green (or stop after 2 attempts on the same failure). Inlined — runs in the parent loop. Detects go/npm/pnp… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "seq": 6,
+      "direction": "client->server",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "session/set_config_option",
+        "params": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "configId": "model",
+          "value": "custom-api-z-ai/glm-5.3-flash"
+        }
+      }
+    },
+    {
+      "seq": 7,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "session/update",
+        "params": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "update": {
+            "sessionUpdate": "available_commands_update",
+            "availableCommands": [
+              {
+                "name": "deslop",
+                "description": "Remove conspicuous AI-style filler, formulaic rhetoric, and repetitive prose while preserving meaning and author voice. Use for deslop, humanize, убрать ИИ-паттерны, natural-sounding drafts,… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "english-dev-docs",
+                "description": "Write every shared development artifact in English, whatever language the conversation is in. Trigger on the act of writing, drafting, creating, filing, rewriting, summarizing, or naming any… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "explore",
+                "description": "Explore the codebase in an isolated subagent — wide-net read-only investigation that returns one distilled answer. Best for: 'find all places that...', 'how does X work across the project', … (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "init",
+                "description": "Bootstrap or refresh this project's AGENTS.md — analyze the codebase (structure, build/test commands, architecture, conventions) and write a concise memory file loaded into every future sess… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "install-capability",
+                "description": "Install or uninstall Reasonix MCP servers and skills from a URL, GitHub/raw file, local path/folder, .mcp.json, executable, or package name. Plans with install_source (op=install or op=unins… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "karpathy-guidelines",
+                "description": "Run the karpathy-guidelines skill",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "reasonix-guide",
+                "description": "Troubleshoot and configure Reasonix capabilities: Skills (project/custom/global/builtin priority, discovery dirs), Commands (override order, /dir:file naming), Hooks (11 events, automatic pr… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "research",
+                "description": "Research a question by combining web_fetch + code reading in an isolated subagent. Best for: 'is X supported by lib Y', 'what's the canonical way to do Z', 'compare our impl against the spec'.",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "review",
+                "description": "Review the pending changes (current branch diff by default) in an isolated subagent — flags correctness, security, missing tests, hidden behavior changes; reports a verdict + per-issue file:… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "security-review",
+                "description": "Security-focused review of the current branch diff in an isolated subagent — flags injection/authz/secrets/deserialization/path-traversal/crypto issues, severity-tagged. Read-only.",
+                "input": {
+                  "hint": "instructions"
+                }
+              },
+              {
+                "name": "test",
+                "description": "Run the project's test suite, diagnose failures, propose+apply fixes, re-run until green (or stop after 2 attempts on the same failure). Inlined — runs in the parent loop. Detects go/npm/pnp… (elided)",
+                "input": {
+                  "hint": "instructions"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "seq": 8,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "session/update",
+        "params": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "update": {
+            "sessionUpdate": "config_option_update",
+            "configOptions": [
+              {
+                "id": "model",
+                "name": "Model",
+                "category": "model",
+                "type": "select",
+                "currentValue": "custom-api-z-ai/glm-5.3-flash",
+                "options": [
+                  {
+                    "value": "custom-api-z-ai/glm-5.3",
+                    "name": "custom-api-z-ai/glm-5.3",
+                    "description": "custom-api-z-ai"
+                  },
+                  {
+                    "value": "custom-api-z-ai/glm-5.3-flash",
+                    "name": "custom-api-z-ai/glm-5.3-flash",
+                    "description": "custom-api-z-ai"
+                  }
+                ]
+              },
+              {
+                "id": "effort",
+                "name": "Effort",
+                "category": "thought_level",
+                "type": "select",
+                "currentValue": "auto",
+                "options": [
+                  {
+                    "value": "auto",
+                    "name": "Auto"
+                  },
+                  {
+                    "value": "enabled",
+                    "name": "Enabled"
+                  },
+                  {
+                    "value": "disabled",
+                    "name": "Disabled"
+                  }
+                ]
+              },
+              {
+                "id": "tool_approval",
+                "name": "Tool Approval",
+                "category": "tool_approval",
+                "type": "select",
+                "currentValue": "ask",
+                "options": [
+                  {
+                    "value": "ask",
+                    "name": "Ask",
+                    "description": "Ask before permission-gated tool calls"
+                  },
+                  {
+                    "value": "auto",
+                    "name": "Auto",
+                    "description": "Follow configured permission rules without fallback prompts"
+                  },
+                  {
+                    "value": "yolo",
+                    "name": "Yolo",
+                    "description": "Approve tool calls except protected decisions"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "seq": 9,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "configOptions": [
+            {
+              "id": "model",
+              "name": "Model",
+              "category": "model",
+              "type": "select",
+              "currentValue": "custom-api-z-ai/glm-5.3-flash",
+              "options": [
+                {
+                  "value": "custom-api-z-ai/glm-5.3",
+                  "name": "custom-api-z-ai/glm-5.3",
+                  "description": "custom-api-z-ai"
+                },
+                {
+                  "value": "custom-api-z-ai/glm-5.3-flash",
+                  "name": "custom-api-z-ai/glm-5.3-flash",
+                  "description": "custom-api-z-ai"
+                }
+              ]
+            },
+            {
+              "id": "effort",
+              "name": "Effort",
+              "category": "thought_level",
+              "type": "select",
+              "currentValue": "auto",
+              "options": [
+                {
+                  "value": "auto",
+                  "name": "Auto"
+                },
+                {
+                  "value": "enabled",
+                  "name": "Enabled"
+                },
+                {
+                  "value": "disabled",
+                  "name": "Disabled"
+                }
+              ]
+            },
+            {
+              "id": "tool_approval",
+              "name": "Tool Approval",
+              "category": "tool_approval",
+              "type": "select",
+              "currentValue": "ask",
+              "options": [
+                {
+                  "value": "ask",
+                  "name": "Ask",
+                  "description": "Ask before permission-gated tool calls"
+                },
+                {
+                  "value": "auto",
+                  "name": "Auto",
+                  "description": "Follow configured permission rules without fallback prompts"
+                },
+                {
+                  "value": "yolo",
+                  "name": "Yolo",
+                  "description": "Approve tool calls except protected decisions"
+                }
+              ]
+            },
+            {
+              "id": "quality_floor",
+              "name": "Quality Floor",
+              "category": "work_mode",
+              "type": "select",
+              "currentValue": "standard",
+              "options": [
+                {
+                  "value": "standard",
+                  "name": "Standard",
+                  "description": "Adaptive verification and review follow task risk"
+                },
+                {
+                  "value": "delivery",
+                  "name": "Delivery",
+                  "description": "Session-sticky delivery gates: full verification, review receipts, project checks"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 10,
+      "direction": "client->server",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "session/prompt",
+        "params": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "prompt": [
+            {
+              "type": "text",
+              "text": "Reply with exactly: ok"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 11,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "_reasonix.io/session/status_update",
+        "params": {
+          "schemaVersion": 1,
+          "sequence": 1,
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "event": "phase",
+          "status": {
+            "schemaVersion": 1,
+            "sequence": 1,
+            "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+            "state": "running",
+            "model": "custom-api-z-ai/glm-5.3-flash",
+            "effort": "auto",
+            "mode": "normal",
+            "workMode": "balanced",
+            "plannerMode": "off",
+            "goal": {
+              "status": "none"
+            },
+            "phase": "starting",
+            "turnOutcome": {
+              "kind": "none"
+            },
+            "finalReadiness": {
+              "readyForReview": false,
+              "summary": "",
+              "risks": []
+            },
+            "sandbox": {
+              "mode": "enforce",
+              "engine": "seatbelt",
+              "available": true,
+              "workspaceRoot": "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z",
+              "writeRoots": [
+                "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z"
+              ],
+              "networkEnabled": true
+            },
+            "usage": {
+              "turn": {
+                "totalTokens": 0,
+                "promptTokens": 0,
+                "completionTokens": 0,
+                "reasoningTokens": 0,
+                "cacheHitTokens": 0,
+                "cacheMissTokens": 0,
+                "cacheHitRatio": null,
+                "estimatedCost": null,
+                "currency": null,
+                "usageSource": "executor"
+              },
+              "cumulative": {
+                "totalTokens": 0,
+                "promptTokens": 0,
+                "completionTokens": 0,
+                "reasoningTokens": 0,
+                "cacheHitTokens": 0,
+                "cacheMissTokens": 0,
+                "cacheHitRatio": null,
+                "estimatedCost": null,
+                "currency": null,
+                "usageSource": "executor"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "seq": 12,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "session/update",
+        "params": {
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "update": {
+            "sessionUpdate": "agent_message_chunk",
+            "content": {
+              "type": "text",
+              "text": "ok"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seq": 13,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "_reasonix.io/session/status_update",
+        "params": {
+          "schemaVersion": 1,
+          "sequence": 2,
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "event": "usage",
+          "status": {
+            "schemaVersion": 1,
+            "sequence": 2,
+            "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+            "state": "running",
+            "model": "custom-api-z-ai/glm-5.3-flash",
+            "effort": "auto",
+            "mode": "normal",
+            "workMode": "balanced",
+            "plannerMode": "off",
+            "goal": {
+              "status": "none"
+            },
+            "phase": "starting",
+            "turnOutcome": {
+              "kind": "none"
+            },
+            "finalReadiness": {
+              "readyForReview": false,
+              "summary": "",
+              "risks": []
+            },
+            "sandbox": {
+              "mode": "enforce",
+              "engine": "seatbelt",
+              "available": true,
+              "workspaceRoot": "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z",
+              "writeRoots": [
+                "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z"
+              ],
+              "networkEnabled": true
+            },
+            "usage": {
+              "turn": {
+                "totalTokens": 5999,
+                "promptTokens": 5996,
+                "completionTokens": 3,
+                "reasoningTokens": 0,
+                "cacheHitTokens": 0,
+                "cacheMissTokens": 5996,
+                "estimated": true,
+                "cacheHitRatio": 0,
+                "estimatedCost": null,
+                "currency": null,
+                "costComplete": false,
+                "displayComplete": false,
+                "displayStatus": "unavailable",
+                "costQuote": {
+                  "original": {
+                    "amount": "0",
+                    "currency": ""
+                  },
+                  "estimated": true,
+                  "costComplete": false,
+                  "displayComplete": false,
+                  "complete": false,
+                  "displayStatus": "unavailable",
+                  "incompleteReason": "no_price"
+                },
+                "usageSource": "executor"
+              },
+              "cumulative": {
+                "totalTokens": 5999,
+                "promptTokens": 5996,
+                "completionTokens": 3,
+                "reasoningTokens": 0,
+                "cacheHitTokens": 0,
+                "cacheMissTokens": 5996,
+                "estimated": true,
+                "cacheHitRatio": 0,
+                "estimatedCost": null,
+                "currency": null,
+                "costComplete": false,
+                "displayComplete": false,
+                "displayStatus": "unavailable",
+                "costQuote": {
+                  "original": {
+                    "amount": "0",
+                    "currency": ""
+                  },
+                  "estimated": true,
+                  "costComplete": false,
+                  "displayComplete": false,
+                  "complete": false,
+                  "displayStatus": "unavailable",
+                  "incompleteReason": "no_price"
+                },
+                "usageSource": "executor"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "seq": 14,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "_reasonix.io/session/status_update",
+        "params": {
+          "schemaVersion": 1,
+          "sequence": 3,
+          "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+          "event": "completion",
+          "status": {
+            "schemaVersion": 1,
+            "sequence": 3,
+            "sessionId": "ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39",
+            "state": "idle",
+            "model": "custom-api-z-ai/glm-5.3-flash",
+            "effort": "auto",
+            "mode": "normal",
+            "workMode": "balanced",
+            "plannerMode": "off",
+            "goal": {
+              "status": "none"
+            },
+            "phase": "completed",
+            "turnOutcome": {
+              "kind": "completed"
+            },
+            "finalReadiness": {
+              "readyForReview": true,
+              "summary": "ok",
+              "risks": []
+            },
+            "sandbox": {
+              "mode": "enforce",
+              "engine": "seatbelt",
+              "available": true,
+              "workspaceRoot": "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z",
+              "writeRoots": [
+                "/var/folders/g8/hsnrm0k94d9fy9znlf6jsnvc0000gn/T/grimoire-reasonix-wire-XviO4Z"
+              ],
+              "networkEnabled": true
+            },
+            "usage": {
+              "turn": {
+                "totalTokens": 5999,
+                "promptTokens": 5996,
+                "completionTokens": 3,
+                "reasoningTokens": 0,
+                "cacheHitTokens": 0,
+                "cacheMissTokens": 5996,
+                "estimated": true,
+                "cacheHitRatio": 0,
+                "estimatedCost": null,
+                "currency": null,
+                "costComplete": false,
+                "displayComplete": false,
+                "displayStatus": "unavailable",
+                "costQuote": {
+                  "original": {
+                    "amount": "0",
+                    "currency": ""
+                  },
+                  "estimated": true,
+                  "costComplete": false,
+                  "displayComplete": false,
+                  "complete": false,
+                  "displayStatus": "unavailable",
+                  "incompleteReason": "no_price"
+                },
+                "usageSource": "executor"
+              },
+              "cumulative": {
+                "totalTokens": 5999,
+                "promptTokens": 5996,
+                "completionTokens": 3,
+                "reasoningTokens": 0,
+                "cacheHitTokens": 0,
+                "cacheMissTokens": 5996,
+                "estimated": true,
+                "cacheHitRatio": 0,
+                "estimatedCost": null,
+                "currency": null,
+                "costComplete": false,
+                "displayComplete": false,
+                "displayStatus": "unavailable",
+                "costQuote": {
+                  "original": {
+                    "amount": "0",
+                    "currency": ""
+                  },
+                  "estimated": true,
+                  "costComplete": false,
+                  "displayComplete": false,
+                  "complete": false,
+                  "displayStatus": "unavailable",
+                  "incompleteReason": "no_price"
+                },
+                "usageSource": "executor"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "seq": 15,
+      "direction": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "stopReason": "end_turn",
+          "transcriptPath": "/Users/grimoire/.reasonix/sessions/ea40eaf5-6aec-4c1e-861c-1a1f89b3fd39.jsonl"
+        }
+      }
+    }
+  ]
+}

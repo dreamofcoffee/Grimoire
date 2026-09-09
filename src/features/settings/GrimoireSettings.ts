@@ -369,6 +369,11 @@ const PROVIDER_SETTING_COPY: Record<ProviderId, {
     name: 'Devin',
     tabName: 'Devin',
   },
+  reasonix: {
+    descKey: 'settings.providers.reasonix.desc',
+    name: 'Reasonix',
+    tabName: 'Reasonix',
+  },
 };
 
 const GENERAL_SETTINGS_SEARCH_KEYS: TranslationKey[] = [
@@ -638,6 +643,7 @@ export class GrimoireSettingTab extends PluginSettingTab {
       'gemini',
       'qwen',
       'devin',
+      'reasonix',
       'pi',
     ];
     const positions = new Map(preferredOrder.map((providerId, index) => [providerId, index]));
@@ -1193,6 +1199,7 @@ export class GrimoireSettingTab extends PluginSettingTab {
         t('settings.environment'),
         t('settings.providerTabs.qwen.environment.heading'),
         t('settings.providerTabs.devin.environment.heading'),
+        t('settings.providerTabs.reasonix.environment.heading'),
       ],
     };
     const titleMatchers: Record<WorkspaceSection, RegExp> = {

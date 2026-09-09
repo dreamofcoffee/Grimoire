@@ -1055,6 +1055,9 @@
       },
       "devin": {
         "desc": "Devin CLI von Cognition über seine native Agent-Client-Protocol-Laufzeit."
+      },
+      "reasonix": {
+        "desc": "Der quelloffene Reasonix-Coding-Agent über seine native Agent-Client-Protocol-Laufzeit."
       }
     },
     "hub": {
@@ -1365,6 +1368,22 @@
           "heading": "Umgebung",
           "name": "Umgebungsvariablen",
           "desc": "Vor der Nutzung mit `devin auth login` anmelden. Optionale CLI-Variablen wie DEVIN_MODEL oder RUST_LOG werden durchgereicht; Grimoire automatisiert die Anmeldung nicht."
+        }
+      },
+      "reasonix": {
+        "cliPath": {
+          "name": "Reasonix-CLI-Pfad",
+          "desc": "Benutzerdefinierter Pfad zur lokalen Reasonix CLI. Leer lassen, um `reasonix` über PATH zu starten."
+        },
+        "hiddenCommands": {
+          "name": "Ausgeblendete Befehle",
+          "desc": "Bestimmte von Reasonix ACP gemeldete Befehle im Dropdown ausblenden. Namen ohne führenden Schrägstrich eingeben, einen pro Zeile.",
+          "placeholder": "init\nreview\nresearch"
+        },
+        "environment": {
+          "heading": "Umgebung",
+          "name": "Umgebungsvariablen",
+          "desc": "Vor der Nutzung `reasonix setup` ausführen, um Anbieter und Zugangsdaten einzurichten. Optionale CLI-Variablen wie REASONIX_HOME werden durchgereicht; Grimoire automatisiert die Anmeldung nicht."
         }
       }
     },

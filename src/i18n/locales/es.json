@@ -1055,6 +1055,9 @@
       },
       "devin": {
         "desc": "Devin CLI de Cognition mediante su entorno nativo Agent Client Protocol."
+      },
+      "reasonix": {
+        "desc": "El agente de programación de código abierto Reasonix mediante su entorno nativo Agent Client Protocol."
       }
     },
     "hub": {
@@ -1365,6 +1368,22 @@
           "heading": "Entorno",
           "name": "Variables de entorno",
           "desc": "Inicia sesión con `devin auth login` antes de usarlo. Se transfieren variables opcionales de la CLI como DEVIN_MODEL o RUST_LOG; Grimoire no automatiza el inicio de sesión."
+        }
+      },
+      "reasonix": {
+        "cliPath": {
+          "name": "Ruta de la CLI de Reasonix",
+          "desc": "Ruta personalizada a la CLI local de Reasonix. Déjala vacía para iniciar `reasonix` desde PATH."
+        },
+        "hiddenCommands": {
+          "name": "Comandos ocultos",
+          "desc": "Oculta comandos específicos informados por Reasonix ACP. Escribe los nombres sin la barra inicial, uno por línea.",
+          "placeholder": "init\nreview\nresearch"
+        },
+        "environment": {
+          "heading": "Entorno",
+          "name": "Variables de entorno",
+          "desc": "Ejecuta `reasonix setup` para configurar proveedores y credenciales antes de usarlo. Se transfieren variables opcionales de la CLI como REASONIX_HOME; Grimoire no automatiza el inicio de sesión."
         }
       }
     },

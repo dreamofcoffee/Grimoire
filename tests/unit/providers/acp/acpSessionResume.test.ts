@@ -52,6 +52,25 @@ describe('acpSessionResume', () => {
       expect(listSessions).not.toHaveBeenCalled();
     });
 
+    it('recognises the sentence Reasonix answers a missing session with', async () => {
+      // Probed 2026-09-09 against `reasonix v1.38.3`. The provider's own
+      // instructions claim this is understood without a listing, and this is
+      // where that claim is kept honest.
+      const listSessions = jest.fn();
+
+      await expect(isAcpSessionGone({
+        error: new JsonRpcErrorResponse(
+          'session/load',
+          -32602,
+          'session/load: unknown session 00000000-0000-0000-0000-000000000000',
+          {},
+        ),
+        listSessions,
+        sessionId: '00000000-0000-0000-0000-000000000000',
+      })).resolves.toBe(true);
+      expect(listSessions).not.toHaveBeenCalled();
+    });
+
     it('keeps the binding when the agent cannot list sessions', async () => {
       await expect(isAcpSessionGone({
         error: new JsonRpcErrorResponse('session/load', -32000, 'Authentication failed'),

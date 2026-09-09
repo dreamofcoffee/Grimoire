@@ -19,6 +19,7 @@ import type { KimicodeExecution } from '@/providers/kimicode/execution/KimicodeE
 import type { MimocodeExecution } from '@/providers/mimocode/execution/MimocodeExecutionComposition';
 import type { OpencodeExecution } from '@/providers/opencode/execution/OpencodeExecutionComposition';
 import type { QwenExecution } from '@/providers/qwen/execution/QwenExecutionComposition';
+import type { ReasonixExecution } from '@/providers/reasonix/execution/ReasonixExecutionComposition';
 
 import { ApplicationRuntime } from './app/ApplicationRuntime';
 import { shouldShowWhatsNew } from './app/changelog/display';
@@ -548,6 +549,14 @@ export default class GrimoirePlugin extends Plugin {
       throw new Error('Devin execution is not available before plugin load.');
     }
     return this.applicationRuntime.devin;
+  }
+
+  /** The Reasonix execution this plugin instance owns; see the note above. */
+  getReasonixExecution(): ReasonixExecution {
+    if (!this.applicationRuntime) {
+      throw new Error('Reasonix execution is not available before plugin load.');
+    }
+    return this.applicationRuntime.reasonix;
   }
 
   /** The Qwen execution this plugin instance owns; see the note above. */

@@ -1055,6 +1055,9 @@
       },
       "devin": {
         "desc": "Devin CLI от Cognition через собственную среду выполнения Agent Client Protocol."
+      },
+      "reasonix": {
+        "desc": "Открытый агент программирования Reasonix через собственную среду выполнения Agent Client Protocol."
       }
     },
     "hub": {
@@ -1365,6 +1368,22 @@
           "heading": "Среда",
           "name": "Переменные среды",
           "desc": "Перед использованием войдите через `devin auth login`. Необязательные переменные CLI, например DEVIN_MODEL или RUST_LOG, передаются; Grimoire не автоматизирует вход."
+        }
+      },
+      "reasonix": {
+        "cliPath": {
+          "name": "Путь к CLI Reasonix",
+          "desc": "Пользовательский путь к локальной CLI Reasonix. Оставьте пустым, чтобы запустить `reasonix` из PATH."
+        },
+        "hiddenCommands": {
+          "name": "Скрытые команды",
+          "desc": "Скрыть отдельные команды, сообщаемые Reasonix ACP. Введите имена без начальной косой черты, по одному в строке.",
+          "placeholder": "init\nreview\nresearch"
+        },
+        "environment": {
+          "heading": "Среда",
+          "name": "Переменные среды",
+          "desc": "Перед использованием выполните `reasonix setup`, чтобы настроить провайдеров и учётные данные. Необязательные переменные CLI, например REASONIX_HOME, передаются; Grimoire не автоматизирует вход."
         }
       }
     },

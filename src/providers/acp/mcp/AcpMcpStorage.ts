@@ -17,7 +17,8 @@ export type AcpMcpProviderId =
   | 'kimicode'
   | 'qwen'
   | 'gemini'
-  | 'devin';
+  | 'devin'
+  | 'reasonix';
 
 type AcpMcpStorageAdapter = Pick<VaultFileAdapter, 'exists' | 'read' | 'write'>;
 

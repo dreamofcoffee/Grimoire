@@ -50,7 +50,7 @@ This file tracks future provider integrations and the implementation sequence fo
 
 ## Current Integration Notes
 
-- Claude Code, Codex, OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, and Devin are current integrations. Their runtime capabilities differ, but each has a registered provider adapter; OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, and Devin use ACP-based runtime paths where their CLI supports them.
+- Claude Code, Codex, OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin, and Reasonix are current integrations. Their runtime capabilities differ, but each has a registered provider adapter; OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin, and Reasonix use ACP-based runtime paths where their CLI supports them.
 - Antigravity CLI and Gemini CLI (Legacy) are current Google integrations with more limited runtime surfaces. Keep Antigravity as the recommended Google path and Gemini only for legacy-compatible accounts; treat provider-specific enhancements as runtime-limited until their CLIs expose richer event streams, safer approval flows, and stronger session/tool metadata.
 - Context visibility should stay provider-neutral. The Context tab should show both user-pinned files and provider runtime file loads when Grimoire can infer them from tool events, while avoiding provider-specific assumptions in shared feature code.
 
@@ -88,6 +88,25 @@ Current boundaries:
 - Authentication is `devin auth login`; credentials stay Devin-owned.
 - Skills are read from `.devin/skills` and `.agents/skills`; a skill is Devin's slash command, and there is no command file or agent file for Grimoire to manage.
 - Plan indicators are spend-only. Auxiliary execution (titles, refinement, inline edit) is not wired.
+
+## Integrated Provider: Reasonix
+
+Current integration (#180):
+
+- Reasonix is opt-in and owns its runtime, settings, model discovery, and UI under `src/providers/reasonix/`. It is Devin's shape, minus the tool-call memory that provider needs, plus a vendor notification for the tokens.
+- Grimoire launches `reasonix acp` and reuses `src/providers/acp/` for transport and session update normalization. The wire recording is `tests/fixtures/provider-traces/wire/reasonix-wire.json` (`reasonix v1.38.3`, 2026-09-09, complete), and two probes of the same day drove a tool-using turn and a Plan turn.
+- Models and modes arrive in ACP's own vocabulary: `session/new` answers with `models`, `modes` (`normal`, `plan`, `goal`) and `configOptions` (`model`, `effort`, `tool_approval`, `quality_floor`). Both `session/set_model` and `session/set_mode` are answered; the model goes through the config option because it reports back what the session holds.
+- **One Grimoire mode is two calls.** The session mode and the approval posture are separate axes, so Safe is `normal` + `tool_approval: ask`, Plan is `plan` + `ask`, and Auto-approve is `normal` + `yolo`. A reported `normal` must never demote somebody out of Auto-approve, because Safe and Auto-approve share that mode.
+- Permission requests carry `title`, `kind`, `rawInput`, `locations` and `_meta["reasonix.io"]`, so the bridge needs no tool-call memory.
+- Reasonix sends no `usage_update`. `ReasonixSessionNotifications` turns `_reasonix.io/session/status_update` into one, with the turn's tokens under `_meta` and no context-window size, because the status states none.
+- Resume is native: `session/load` replays the transcript and answers with the same discovery `session/new` gives; a missing session answers `-32602 "session/load: unknown session <id>"`, which `isAcpMissingSessionError` recognises.
+
+Current boundaries:
+
+- Authentication and model configuration are `reasonix setup` and `~/.reasonix/config.toml`; API keys are named by `api_key_env` and read from the environment.
+- Skills are read from `.reasonix/skills` and `.agents/skills`. `.reasonix/commands/*.md` are slash commands the CLI reads and Grimoire does not manage; the session announces whatever they define.
+- Not driven yet, each a separate piece of work: the `effort` config option (a thinking switch, not a tiered budget), `_reasonix.io/session/steer`, and image attachments the handshake declares unsupported.
+- Plan indicators are spend-only, and a turn is priced only when the configured model provider has a price.
 
 ## Other Candidates
 

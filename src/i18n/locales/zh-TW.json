@@ -1055,6 +1055,9 @@
       },
       "devin": {
         "desc": "透過原生 Agent Client Protocol 執行的 Cognition Devin CLI。"
+      },
+      "reasonix": {
+        "desc": "透過原生 Agent Client Protocol 執行的開源程式設計智慧代理 Reasonix。"
       }
     },
     "hub": {
@@ -1365,6 +1368,22 @@
           "heading": "環境",
           "name": "環境變數",
           "desc": "使用前請先以 `devin auth login` 登入。DEVIN_MODEL、RUST_LOG 等選用 CLI 變數會原樣傳遞；Grimoire 不會自動登入。"
+        }
+      },
+      "reasonix": {
+        "cliPath": {
+          "name": "Reasonix CLI 路徑",
+          "desc": "Reasonix CLI 的本機路徑。留空則從 PATH 啟動 `reasonix`。"
+        },
+        "hiddenCommands": {
+          "name": "隱藏的命令",
+          "desc": "隱藏 Reasonix ACP 回報的指定命令。每行輸入一個不含斜線前綴的名稱。",
+          "placeholder": "init\nreview\nresearch"
+        },
+        "environment": {
+          "heading": "環境",
+          "name": "環境變數",
+          "desc": "使用前請先執行 `reasonix setup` 設定供應商與憑證。REASONIX_HOME 等選用 CLI 變數會原樣傳遞；Grimoire 不會自動登入。"
         }
       }
     },

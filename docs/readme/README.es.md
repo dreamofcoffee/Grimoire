@@ -29,7 +29,7 @@
 
 > **Aviso: la 2.0 está en marcha.** La próxima versión mayor lleva Grimoire a una arquitectura de ejecución basada en proveedores, donde un único núcleo dirige cada CLI y registra exactamente un resultado por turno, y trae un rediseño que sigue el tema y el color de acento de tu bóveda. Ya está fusionada en `main` y todavía no forma parte de ninguna versión publicada. La versión actual sigue siendo la 1.3.2. Las conversaciones, los ajustes y los archivos de los proveedores se conservan sin cambios.
 
-Grimoire lleva asistentes CLI agentic a Obsidian. Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code y Devin viven en un solo panel lateral: leen tus notas, editan archivos, ejecutan comandos, llaman tools y conservan session history contra tu vault real. Nada pasa por un servidor de Grimoire. No hay telemetry, hosted backend ni proxy entre tú y tu provider.
+Grimoire lleva asistentes CLI agentic a Obsidian. Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin y Reasonix viven en un solo panel lateral: leen tus notas, editan archivos, ejecutan comandos, llaman tools y conservan session history contra tu vault real. Nada pasa por un servidor de Grimoire. No hay telemetry, hosted backend ni proxy entre tú y tu provider.
 
 Está diseñado para quienes ya trabajan en Obsidian y quieren ayuda de IA que se sienta como parte del vault: contexto local, archivos locales, un provider elegido a propósito y usage/cost visibles dentro de la interfaz.
 
@@ -38,25 +38,25 @@ Está diseñado para quienes ya trabajan en Obsidian y quieren ayuda de IA que s
 ## Por qué Grimoire
 
 - Usa los CLI agents en los que ya confías, directamente dentro de tus notas.
-- Cambia de provider desde el composer. Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code y Devin comparten un model picker.
+- Cambia de provider desde el composer. Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin y Reasonix comparten un model picker.
 - Ancla cada turn en tu vault. Menciona notas, carpetas y MCP tools sin pegar paths a mano.
 - Ve cost y limits junto al selector de modelo, justo donde tomas la decisión.
 - Mantén un flujo local-first. Grimoire no recopila telemetry, no proxifica prompts y no ejecuta un backend.
 
 ## Qué puede hacer cada provider
 
-| Capability | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI (Legacy) | Qwen Code | Devin |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Local persistent runtime | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí |
-| Native history hydration | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | No | No |
-| Plan mode | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí |
-| Image attachments | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí |
-| Instruction mode | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí |
-| Reasoning effort controls | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | No |
-| Rewind | No | Sí | No | Sí | No | No | No | No | No | No |
-| Fork | Sí | Sí | No | Sí | No | No | No | No | No | No |
-| Provider slash commands | No | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí |
-| Grimoire-managed MCP UI | No | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí |
+| Capability | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI (Legacy) | Qwen Code | Devin | Reasonix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Local persistent runtime | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
+| Native history hydration | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | No | No | No |
+| Plan mode | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
+| Image attachments | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | No |
+| Instruction mode | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
+| Reasoning effort controls | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | No | No |
+| Rewind | No | Sí | No | Sí | No | No | No | No | No | No | No |
+| Fork | Sí | Sí | No | Sí | No | No | No | No | No | No | No |
+| Provider slash commands | No | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
+| Grimoire-managed MCP UI | No | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
 
 ## Instalación
 
@@ -238,6 +238,30 @@ Algo que conviene saber sobre el modo Safe: Devin decide por su cuenta qué shel
 Devin gestiona sus credenciales en `~/.local/share/devin/`. Las skills del vault se leen de `.devin/skills` y `.agents/skills`, y una skill es el slash command de Devin. Grimoire mantiene una lista MCP propia en `.grimoire/mcp/devin.json` y la inyecta en la session ACP. El uso aparece cuando Devin lo informa; no hay control de reasoning effort porque el effort forma parte del id del model. Devin no admite fork ni rewind en Grimoire.
 
 
+### Reasonix
+
+Reasonix es un agente de programación de código abierto y multimodelo, y aquí un proveedor ACP opcional. Grimoire lanza `reasonix acp`, lee los modelos y modos de la sesión viva, transmite mensajes, razonamiento, actividad de herramientas y planes, pregunta antes de las herramientas con permiso y de las escrituras de archivos, y reanuda sesiones de forma nativa. Qué modelos ofrece una sesión depende de los bloques de proveedor de tu configuración de Reasonix; eso es de Reasonix, no de Grimoire.
+
+```bash
+# npm
+npm i -g reasonix
+
+# Homebrew
+brew install esengine/reasonix/reasonix
+
+reasonix setup
+reasonix --version
+```
+
+Ejecuta `reasonix setup` para configurar un proveedor de modelos y sus credenciales, y luego activa Reasonix en Grimoire. Reasonix guarda dos ajustes donde otros proveedores guardan uno: el modo de sesión (`normal`, `plan`, `goal`) y una postura de aprobación de herramientas aparte (`ask`, `auto`, `yolo`). La barra de Grimoire controla ambos. Safe es `normal` preguntando, Plan es `plan` preguntando y Auto-approve es `normal` en `yolo`; `goal` es propio de Reasonix y se muestra como Safe.
+
+- [Documentación de Reasonix](https://reasonix.io/docs/)
+- [Reasonix en GitHub](https://github.com/esengine/DeepSeek-Reasonix)
+
+Algo que conviene saber sobre Safe: `ask` protege las herramientas que Reasonix clasifica como sujetas a permiso, no todas, así que un comando de shell que juzga de solo lectura puede ejecutarse sin preguntar. Grimoire aprueba cada escritura de archivo que Reasonix hace por el protocolo, y eso es lo que mantiene el vault detrás de una pregunta. Para una sesión que no debe escribir, usa Plan.
+
+Reasonix mantiene su configuración en `~/.reasonix/config.toml` y lee las claves de API del entorno con los nombres que ese archivo indica. Las habilidades del vault se leen de `.reasonix/skills` y `.agents/skills`. Grimoire gestiona una lista MCP de proyecto aislada en `.grimoire/mcp/reasonix.json` y la inyecta en las sesiones ACP. El uso viene de las notificaciones de estado de Reasonix, y el coste aparece solo si tu proveedor de modelos tiene precio. No se admiten imágenes adjuntas, control de esfuerzo de razonamiento, fork ni rewind.
+
 ### OpenCode
 
 Elige OpenCode para un agent model-agnostic con su propia provider configuration.
@@ -340,7 +364,7 @@ La tarjeta de aprobación **Parallel workers** muestra el model heredado y permi
 
 ### Model selector
 
-Un solo picker, agrupado por provider y ordenado por label: Antigravity, Claude Code, Codex, Devin, Gemini CLI (Legacy), Grok Build, Kimi Code, MiMoCode, OpenCode y Qwen Code. Search funciona sobre labels, descriptions, groups y model IDs. Catalogs carga lazily y recuerda qué groups colapsaste. Añade custom aliases y context-window overrides en settings. Los variants 1M de Claude son opciones extra, no reemplazos de los base models.
+Un solo picker, agrupado por provider y ordenado por label: Antigravity, Claude Code, Codex, Devin, Gemini CLI (Legacy), Grok Build, Kimi Code, MiMoCode, OpenCode, Qwen Code y Reasonix. Search funciona sobre labels, descriptions, groups y model IDs. Catalogs carga lazily y recuerda qué groups colapsaste. Añade custom aliases y context-window overrides en settings. Los variants 1M de Claude son opciones extra, no reemplazos de los base models.
 
 ### Usage y cost
 
@@ -354,6 +378,7 @@ Un badge junto al model selector mantiene visible el usage del provider activo. 
 | Gemini CLI (Legacy) | ACP cost metadata cuando Gemini CLI lo informa; solo legacy provider |
 | Qwen Code | ACP token y cost metadata cuando Qwen Code lo informa |
 | Devin | Total de créditos de la sesión informado por ACP, como gasto mensual |
+| Reasonix | Coste por turno desde sus propias notificaciones de estado, cuando el proveedor de modelos configurado tiene precio |
 | OpenCode | Monthly spend agregado desde ACP y session cost metadata |
 | MiMoCode | Monthly spend agregado desde ACP y session cost metadata |
 | Kimi Code | Monthly spend agregado desde ACP y session cost metadata |
@@ -461,7 +486,7 @@ Obsidian Community plugins es la ruta de instalación recomendada para usuarios.
 
 ## Roadmap
 
-Hoy Grimoire se entrega con Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code y Devin.
+Hoy Grimoire se entrega con Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin y Reasonix.
 
 Lo siguiente: GitHub Copilot CLI, otros ACP-compatible providers y local model CLIs cuando su runtime sea lo bastante estable para integrarse en Obsidian. Las implementation notes viven en [docs/provider-roadmap.md](../provider-roadmap.md).
 
