@@ -1,6 +1,7 @@
 import type {
   ProviderPlanUsageWindow,
 } from '../../../core/providers/types';
+import { formatPlanResetLabel, resolvePlanResetDate } from '../../../providers/shared/planUsageReset';
 import type {
   ProviderPlanUsage,
   ProviderPlanUsageContext,
@@ -13,6 +14,7 @@ interface ParsedWindow {
   label: string;
   pct: number;
   reset: string;
+  resetAt?: number;
 }
 
 const DEFAULT_CODEX_PLAN = 'ChatGPT Pro';
@@ -132,6 +134,7 @@ function summarizeCodexUsage(usage: ProviderPlanUsage | null): Record<string, un
         pct: window.pct,
         ...(window.pctKnown === false ? { pctKnown: false } : {}),
         reset: window.reset,
+        ...(window.resetAt !== undefined ? { resetAt: window.resetAt } : {}),
       })),
     } : {}),
   };
@@ -190,12 +193,15 @@ function parseWindowCandidate(candidate: { key?: string; value: unknown }): Pars
   }
 
   const pct = readPct(candidate.value);
-  const reset = readReset(candidate.value);
+  const resetValue = readResetValue(candidate.value);
+  const reset = formatPlanResetLabel(resetValue);
   if (pct === null || !reset) {
     return null;
   }
 
-  return { label, pct, reset };
+  const resetAt = resolvePlanResetDate(resetValue);
+
+  return { label, pct, reset, ...(resetAt ? { resetAt: resetAt.getTime() } : {}) };
 }
 
 function normalizeParsedWindow(window: ParsedWindow): ProviderPlanUsageWindow {
@@ -203,6 +209,7 @@ function normalizeParsedWindow(window: ParsedWindow): ProviderPlanUsageWindow {
     label: window.label,
     pct: clampPct(window.pct),
     reset: window.reset,
+    ...(window.resetAt !== undefined ? { resetAt: window.resetAt } : {}),
   };
 }
 
@@ -241,12 +248,8 @@ function readPct(record: Record<string, unknown>): number | null {
   return null;
 }
 
-function readReset(record: Record<string, unknown>): string | null {
-  const value = readValue(record, ['reset', 'resets', 'resetAt', 'resetsAt', 'resetTime', 'resetLabel', 'resetAfter']);
-  if (value === null) {
-    return null;
-  }
-  return formatResetValue(value);
+function readResetValue(record: Record<string, unknown>): unknown {
+  return readValue(record, ['reset', 'resets', 'resetAt', 'resetsAt', 'resetTime', 'resetLabel', 'resetAfter']);
 }
 
 function normalizeWindowLabel(value: string, windowDurationMins?: number | null): string | null {
@@ -279,42 +282,6 @@ function normalizeWindowLabel(value: string, windowDurationMins?: number | null)
   return label;
 }
 
-function formatResetValue(value: unknown): string | null {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return null;
-    }
-    const parsedDate = Date.parse(trimmed);
-    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed) && Number.isFinite(parsedDate)) {
-      return formatResetDate(new Date(parsedDate));
-    }
-    return trimmed;
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    const milliseconds = value > 10_000_000_000 ? value : value * 1000;
-    return formatResetDate(new Date(milliseconds));
-  }
-
-  return null;
-}
-
-function formatResetDate(date: Date): string {
-  const now = new Date();
-  if (
-    date.getFullYear() === now.getFullYear()
-    && date.getMonth() === now.getMonth()
-    && date.getDate() === now.getDate()
-  ) {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
-}
 
 function clampPct(pct: number): number {
   if (!Number.isFinite(pct)) {

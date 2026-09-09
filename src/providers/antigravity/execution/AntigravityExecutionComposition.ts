@@ -269,7 +269,9 @@ export class AntigravityExecution {
       },
       ports,
       antigravityProviderModule.runtimePorts({
+        cachedPlanUsage: () => null,
         listModels: async () => [],
+        refreshPlanUsage: async () => null,
         refreshModels: async () => [],
         // Stubbed like the two above: this context is passed for the runtime
         // ports, which never draw a settings tab. The workspace holder builds

@@ -69,7 +69,9 @@ describe('Antigravity provider module', () => {
 
     it('omits the ports it has nothing to put in', () => {
       const ports = antigravityProviderModule.runtimePorts({
+        cachedPlanUsage: () => null,
         listModels: async () => [],
+        refreshPlanUsage: async () => null,
         refreshModels: async () => [],
         renderSettingsTab: () => undefined,
       });
@@ -155,7 +157,9 @@ describe('Antigravity provider module', () => {
 
   describe('workspace contribution', () => {
     const context = {
+      cachedPlanUsage: jest.fn().mockReturnValue(null),
       listModels: jest.fn().mockResolvedValue([{ id: 'a', label: 'A' }]),
+      refreshPlanUsage: jest.fn().mockResolvedValue(null),
       refreshModels: jest.fn().mockResolvedValue([{ id: 'b', label: 'B' }]),
       renderSettingsTab: jest.fn(),
     };
@@ -167,6 +171,7 @@ describe('Antigravity provider module', () => {
       );
 
       expect(workspace.models).toBeDefined();
+      expect(workspace.usage).toBeDefined();
       expect(workspace.commands).toBeUndefined();
       expect(workspace.mcp).toBeUndefined();
       expect(workspace.agentMentions).toBeUndefined();

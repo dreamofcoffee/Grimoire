@@ -479,6 +479,12 @@ export interface ProviderUsageWindow {
    */
   readonly pctKnown?: boolean;
   readonly reset: string;
+  /**
+   * The reset instant in epoch milliseconds, when the provider reports one.
+   * `reset` stays the short label for narrow surfaces; this is the exact
+   * moment, spelled out where there is room for it.
+   */
+  readonly resetAt?: number;
 }
 
 export interface ProviderRuntimeCommandsPort {

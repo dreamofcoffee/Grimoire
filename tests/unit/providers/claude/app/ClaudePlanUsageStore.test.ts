@@ -44,11 +44,13 @@ describe('ClaudePlanUsageStore', () => {
               hour: 'numeric',
               minute: '2-digit',
             }).format(fiveHourReset),
+            resetAt: fiveHourReset.getTime(),
           },
           {
             label: 'Weekly',
             pct: 63,
             reset: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(weeklyReset),
+            resetAt: weeklyReset.getTime(),
           },
         ],
       });
@@ -85,7 +87,7 @@ describe('ClaudePlanUsageStore', () => {
       })).toEqual({
         plan: 'Claude Code',
         windows: [
-          { label: '5-hr', pct: 47, reset: expectedReset },
+          { label: '5-hr', pct: 47, reset: expectedReset, resetAt: resetDate.getTime() },
         ],
       });
     } finally {
@@ -268,11 +270,13 @@ describe('ClaudePlanUsageStore', () => {
               hour: 'numeric',
               minute: '2-digit',
             }).format(fiveHourReset),
+            resetAt: fiveHourReset.getTime(),
           },
           {
             label: 'Weekly',
             pct: 31,
             reset: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(weeklyReset),
+            resetAt: weeklyReset.getTime(),
           },
         ],
       });

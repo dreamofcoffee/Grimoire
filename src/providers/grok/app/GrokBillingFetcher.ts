@@ -57,6 +57,7 @@ export function parseGrokBillingResponse(payload: unknown): GrokCreditsUsageSnap
       pct: Math.min(100, Math.max(0, Math.round(usagePercent))),
       pctKnown: true,
       reset: formatResetLabel(resetAt),
+      resetAt: resetAt.getTime(),
     }],
   };
 }
@@ -76,6 +77,7 @@ export function parseGrokCreditsConfigMessage(message: Uint8Array): GrokCreditsU
       pct: Math.min(100, Math.max(0, Math.round(usagePercent))),
       pctKnown: true,
       reset: formatResetLabel(resetAt),
+      resetAt: resetAt.getTime(),
     }],
   };
 }

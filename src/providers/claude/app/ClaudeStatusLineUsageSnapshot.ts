@@ -1,5 +1,6 @@
 import type { ProviderPlanUsageWindow } from '../../../core/providers/types';
 import type { VaultFileAdapter } from '../../../core/storage/VaultFileAdapter';
+import { formatPlanResetLabel, resolvePlanResetDate } from '../../../providers/shared/planUsageReset';
 import { isRecord } from '../../../utils/records';
 
 export const CLAUDE_STATUSLINE_USAGE_SNAPSHOT_PATH = '.grimoire/claude/statusline-usage.json';
@@ -58,10 +59,13 @@ function parseStatusLineWindow(
   }
 
   const pct = readPct(value.used_percentage ?? value.usedPercentage);
-  const reset = formatResetValue(value.resets_at ?? value.resetsAt);
+  const resetValue = value.resets_at ?? value.resetsAt;
+  const reset = formatPlanResetLabel(resetValue);
   if (pct === null || !reset) {
     return null;
   }
+
+  const resetAt = resolvePlanResetDate(resetValue);
 
   return {
     key,
@@ -69,6 +73,7 @@ function parseStatusLineWindow(
       label: key === 'five_hour' ? '5-hr' : 'Weekly',
       pct,
       reset,
+      ...(resetAt ? { resetAt: resetAt.getTime() } : {}),
     },
   };
 }
@@ -82,35 +87,6 @@ function readPct(value: unknown): number | null {
   return Number.isFinite(numeric) ? clampPct(numeric) : null;
 }
 
-function formatResetValue(value: unknown): string | null {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed || null;
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    const milliseconds = value > 10_000_000_000 ? value : value * 1000;
-    return formatResetDate(new Date(milliseconds));
-  }
-
-  return null;
-}
-
-function formatResetDate(date: Date): string {
-  const now = new Date();
-  if (
-    date.getFullYear() === now.getFullYear()
-    && date.getMonth() === now.getMonth()
-    && date.getDate() === now.getDate()
-  ) {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
-}
 
 function clampPct(pct: number): number {
   if (!Number.isFinite(pct)) {

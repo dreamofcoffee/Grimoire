@@ -75,8 +75,8 @@ describe('CodexPlanUsageStore', () => {
       plan: 'ChatGPT Pro',
       updatedAt: expect.any(Number),
       windows: [
-        { label: '5-hr', pct: 5, reset: expect.any(String) },
-        { label: 'Weekly', pct: 61, reset: expect.any(String) },
+        { label: '5-hr', pct: 5, reset: expect.any(String), resetAt: expect.any(Number) },
+        { label: 'Weekly', pct: 61, reset: expect.any(String), resetAt: expect.any(Number) },
       ],
     });
   });
@@ -133,7 +133,7 @@ describe('CodexPlanUsageStore', () => {
         plan: 'ChatGPT Pro',
         updatedAt: expect.any(Number),
         windows: [
-          { label: '5-hr', pct: 9, reset: expectedReset },
+          { label: '5-hr', pct: 9, reset: expectedReset, resetAt: localResetAt * 1000 },
         ],
       });
     } finally {
