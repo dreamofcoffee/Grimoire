@@ -373,8 +373,8 @@ describe('GrimoireSettingTab settings hub', () => {
     ).map((element: any) => element.textContent?.trim() ?? '');
 
     expect(providerNames).toEqual([
-      'Claude Code',
       'Codex',
+      'Claude Code',
       'OpenCode',
       'Grok Build',
       'MiMoCode',
@@ -382,6 +382,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'Antigravity',
       'Gemini CLI (Legacy)',
       'Qwen Code',
+      'Devin',
     ]);
     expect(collectText(settingEl)).not.toContain('Enabled');
     expect(collectText(settingEl)).not.toContain('Disabled');
@@ -391,8 +392,8 @@ describe('GrimoireSettingTab settings hub', () => {
     expect(providerHint?.textContent).toBe('Select a provider card to view its settings below.');
     expect(providerGrid).not.toBeNull();
     expect(providerCatalog().ids()).toEqual([
-      'claude',
       'codex',
+      'claude',
       'opencode',
       'grok',
       'mimocode',
@@ -400,6 +401,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'antigravity',
       'gemini',
       'qwen',
+      'devin',
     ]);
   });
 
@@ -499,15 +501,18 @@ describe('GrimoireSettingTab settings hub', () => {
     const providerIds = providerCatalog().ids();
 
     expect((tab as any).getWorkspaceManagerProviders(providerIds, 'skills')).toEqual([
-      'claude',
       'codex',
+      'claude',
       'opencode',
       'grok',
       'mimocode',
       'kimicode',
       'gemini',
       'qwen',
+      'devin',
     ]);
+    // Devin lists its session's commands but manages no command file, so it
+    // has a commands inventory and no commands manager.
     expect((tab as any).getWorkspaceManagerProviders(providerIds, 'commands')).toEqual([
       'claude',
       'opencode',
@@ -518,8 +523,8 @@ describe('GrimoireSettingTab settings hub', () => {
       'qwen',
     ]);
     expect((tab as any).getWorkspaceManagerProviders(providerIds, 'agents')).toEqual([
-      'claude',
       'codex',
+      'claude',
       'opencode',
       'grok',
       'mimocode',
@@ -535,6 +540,7 @@ describe('GrimoireSettingTab settings hub', () => {
       'kimicode',
       'gemini',
       'qwen',
+      'devin',
     ]);
     expect((tab as any).getWorkspaceManagerProviders(providerIds, 'environment')).toEqual([
       '__shared__',

@@ -29,32 +29,32 @@
 
 > **提示：2.0 正在开发中。** 下一个大版本将把 Grimoire 迁移到以提供商为基础的执行架构：由一个内核驱动每个 CLI，并为每一轮精确记录一个结果；同时带来跟随仓库主题与强调色的全新设计。相关工作已合并到 `main` 分支，但尚未进入任何已发布版本。当前发布版本仍是 1.3.2。对话、设置和提供商文件将原样保留。
 
-Grimoire 将智能体 CLI 助手带入 Obsidian。Claude Code、Codex、Antigravity CLI、Gemini CLI（旧版）、OpenCode、MiMoCode、Kimi Code、Grok Build 和 Qwen Code 都位于同一个侧边栏中；它们可以读取笔记、编辑文件、执行命令、调用工具，并将会话历史保存在你的真实仓库中。任何内容都不会经由 Grimoire 服务器传输：没有遥测、没有托管后端，也没有处在中间的代理服务器。
+Grimoire 将智能体 CLI 助手带入 Obsidian。Codex、Claude Code、Antigravity CLI、Gemini CLI（旧版）、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code 和 Devin 都位于同一个侧边栏中；它们可以读取笔记、编辑文件、执行命令、调用工具，并将会话历史保存在你的真实仓库中。任何内容都不会经由 Grimoire 服务器传输：没有遥测、没有托管后端，也没有处在中间的代理服务器。
 
 Grimoire 面向已经使用 Obsidian 工作，并希望 AI 助手像仓库的一部分那样运作的用户：上下文留在本地、文件留在本地、供应商由你明确选择，用量也真正可见。
 
 ## 为什么选择 Grimoire
 
 - 在笔记里直接使用你已经信任的 CLI 代理。
-- 直接从输入区切换供应商。Claude Code、Codex、Antigravity CLI、Gemini CLI（旧版）、OpenCode、MiMoCode、Kimi Code、Grok Build 和 Qwen Code 共用一个模型选择器。
+- 直接从输入区切换供应商。Codex、Claude Code、Antigravity CLI、Gemini CLI（旧版）、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code 和 Devin 共用一个模型选择器。
 - 让每轮对话都以你的仓库为依据。可以提及笔记、文件夹和 MCP 工具，无需手动粘贴路径。
 - 在模型选择器旁查看费用和限制——也就是你作出模型选择的位置。
 - 坚持本地优先。Grimoire 不收集遥测数据、不代理转发提示词，也不运行后端服务。
 
 ## 各供应商支持的功能
 
-| 能力 | Claude Code | Codex | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI（旧版） | Qwen Code |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 本地持久运行时 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 |
-| 原生历史记录恢复 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 否 |
-| 规划模式 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 |
-| 图片附件 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 |
-| 指令模式 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 |
-| 推理强度控制 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 |
-| 回退 | 是 | 否 | 否 | 是 | 否 | 否 | 否 | 否 | 否 |
-| 分叉 | 是 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 |
-| 供应商斜杠命令 | 是 | 否 | 是 | 是 | 是 | 是 | 否 | 是 | 是 |
-| Grimoire 管理的 MCP 界面 | 是 | 否 | 是 | 是 | 是 | 是 | 否 | 是 | 是 |
+| 能力 | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI（旧版） | Qwen Code | Devin |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 本地持久运行时 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
+| 原生历史记录恢复 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 否 | 否 |
+| 规划模式 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
+| 图片附件 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
+| 指令模式 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
+| 推理强度控制 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 |
+| 回退 | 否 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 |
+| 分叉 | 是 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 |
+| 供应商斜杠命令 | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
+| Grimoire 管理的 MCP 界面 | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
 
 ## 安装
 
@@ -108,9 +108,25 @@ cp dist/grimoire/main.js dist/grimoire/manifest.json dist/grimoire/styles.css \
 
 ### 推荐供应商
 
-为了获得最佳 Grimoire 体验，建议先从 Claude Code、Codex、OpenCode、MiMoCode、Kimi Code、Grok Build 或 Qwen Code 开始。这些供应商目前为仓库原生工作提供最强的运行时接口：持久会话、面向规划的工作流、工具活动和丰富的模型控制。
+为了获得最佳 Grimoire 体验，建议先从 Codex、Claude Code、OpenCode、MiMoCode、Kimi Code、Grok Build 或 Qwen Code 开始。这些供应商目前为仓库原生工作提供最强的运行时接口：持久会话、面向规划的工作流、工具活动和丰富的模型控制。
 
 Antigravity CLI 和 Gemini CLI（旧版）仍可用于 Google 账户和兼容性场景，但目前不建议将它们作为 Grimoire 的主要供应商。Grimoire 会在现有条件下尽力支持它们，并已实现当前 CLI 所允许的回退方案；不过，它们的 ACP 与运行时接口在技术上仍有局限：与推荐供应商相比，会话、授权、流式输出、工具/编辑元数据、模型发现和用量报告并不完整，或不够可靠。
+
+### Codex
+
+Codex 是首次启动时的默认供应商。选择它即可在本地 CLI 中使用 OpenAI Codex，并通过 ChatGPT 套餐或 API 密钥登录。
+
+```bash
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+codex
+```
+
+先运行一次 Codex 并登录，然后在 Grimoire 中启用。目前主要的安装方式是独立安装程序；Windows、Homebrew 及包管理器备用安装方式请参阅官方 Codex CLI 文档。
+
+- [Codex CLI 设置](https://developers.openai.com/codex/cli)
+- [OpenAI 代码生成指南](https://developers.openai.com/api/docs/guides/code-generation)
+
+在 Grimoire 中，Codex 通过 app-server 协议运行，支持原生历史记录、分叉、规划模式、图片输入和推理强度控制。当 Codex 返回速率限制元数据时，界面会显示套餐用量。
 
 ### Claude Code
 
@@ -140,22 +156,6 @@ claude
   }
 }
 ```
-
-### Codex
-
-Codex 是首次启动时的默认供应商。选择它即可在本地 CLI 中使用 OpenAI Codex，并通过 ChatGPT 套餐或 API 密钥登录。
-
-```bash
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
-codex
-```
-
-先运行一次 Codex 并登录，然后在 Grimoire 中启用。目前主要的安装方式是独立安装程序；Windows、Homebrew 及包管理器备用安装方式请参阅官方 Codex CLI 文档。
-
-- [Codex CLI 设置](https://developers.openai.com/codex/cli)
-- [OpenAI 代码生成指南](https://developers.openai.com/api/docs/guides/code-generation)
-
-在 Grimoire 中，Codex 通过 app-server 协议运行，支持原生历史记录、分叉、规划模式、图片输入和推理强度控制。当 Codex 返回速率限制元数据时，界面会显示套餐用量。
 
 ### Antigravity CLI
 
@@ -216,6 +216,31 @@ qwen
 推理强度可选 Low、Medium、High、XHigh 和 Max，默认为 High。在普通轮次开始前，Grimoire 会实际执行 Qwen 的 `/effort <tier>` 命令，并在该会话中缓存这一设置；实际生效的级别仍取决于所选模型与供应商。Qwen 的结构化 `AskUserQuestion` 请求通过 ACP 权限元数据传入，并使用 Grimoire 共用的内联提问界面，其中包括单选、多选和自由输入。
 
 Qwen 仍在 `~/.qwen/settings.json` 中自行管理凭据和原生配置。Grimoire 管理 `.grimoire/mcp/qwen.json` 中隔离的项目 MCP 列表，并在不改写 Qwen 原生配置的情况下将其注入 ACP 会话。只有当 Qwen 发出 ACP 令牌或费用元数据时，界面才会显示用量。Qwen 目前不支持 Grimoire 的分叉或回退控件。
+
+### Devin
+
+Devin CLI（Cognition）是可选启用的 ACP 供应商。Grimoire 通过 `devin acp` 启动它，从运行中的会话获取你的账户可用的模型与模式，流式呈现消息、思考过程和工具活动，在执行 shell 命令和写入文件前询问，并原生恢复会话。可用模型列表取决于你登录的账户，这由 Devin 决定，而不是 Grimoire 的限制。
+
+```bash
+# macOS, Linux, WSL
+curl -fsSL https://cli.devin.ai/install.sh | bash
+
+# Homebrew
+brew install --cask devin-cli
+
+devin auth login
+devin --version
+```
+
+先用 `devin auth login`（浏览器登录）完成登录，再在 Grimoire 中启用 Devin。Safe、Auto-approve 和 Plan 分别对应 Devin 的 `accept-edits`、`bypass` 和 `plan`；Devin 的 `smart` 与 `ask` 在共享工具栏中显示为 Safe。
+
+- [Devin CLI 文档](https://docs.devin.ai/cli)
+- [Devin ACP 文档](https://docs.devin.ai/desktop/acp)
+
+关于 Safe 模式有一点需要了解：Devin 会自行判断哪些 shell 命令属于只读并直接执行，`echo` 即使重定向写入文件也算在内。Grimoire 会为 Devin 通过协议发起的每一次文件写入征求许可，但代理绕过协议、经由自身 shell 完成的写入可能不受这道关卡约束。如果某个会话绝对不能写入，请使用 Plan。
+
+Devin 的凭据由它自己保存在 `~/.local/share/devin/`。仓库技能从 `.devin/skills` 和 `.agents/skills` 读取，技能就是 Devin 的斜杠命令。Grimoire 在 `.grimoire/mcp/devin.json` 中维护独立的 MCP 列表并注入 ACP 会话。用量会在 Devin 报告时显示；没有推理强度控制，因为强度已包含在模型 id 中。Grimoire 的分叉与回退不适用于 Devin。
+
 
 ### OpenCode
 
@@ -311,7 +336,7 @@ Grok 4.5 目前是驱动 Grok Build 的默认模型。Grimoire 从已认证的 G
 
 ### 模型选择器
 
-所有模型共用一个选择器，按供应商分组并按名称排序：Antigravity、Claude Code、Codex、Gemini CLI（旧版）、Grok Build、Kimi Code、MiMoCode、OpenCode 和 Qwen Code。搜索会匹配名称、描述、分组和模型 ID，并且在筛选时不会改变菜单尺寸。模型目录按需加载，并会记住你折叠过的分组。你可以在设置中添加自定义别名和上下文窗口覆盖值。Claude 的 1M 上下文变体是额外选项，不会替代基础模型。
+所有模型共用一个选择器，按供应商分组并按名称排序：Antigravity、Claude Code、Codex、Devin、Gemini CLI（旧版）、Grok Build、Kimi Code、MiMoCode、OpenCode 和 Qwen Code。搜索会匹配名称、描述、分组和模型 ID，并且在筛选时不会改变菜单尺寸。模型目录按需加载，并会记住你折叠过的分组。你可以在设置中添加自定义别名和上下文窗口覆盖值。Claude 的 1M 上下文变体是额外选项，不会替代基础模型。
 
 ### 用量与费用
 
@@ -319,11 +344,12 @@ Grok 4.5 目前是驱动 Grok Build 的默认模型。Grimoire 从已认证的 G
 
 | 供应商 | 用量来源 |
 | --- | --- |
-| Claude Code | SDK 速率限制事件、可选的 `.grimoire/claude/statusline-usage.json`，以及 SDK 返回的费用元数据 |
 | Codex | 账户速率限制通知，以及可用时的 `account/rateLimits/read` |
+| Claude Code | SDK 速率限制事件、可选的 `.grimoire/claude/statusline-usage.json`，以及 SDK 返回的费用元数据 |
 | Antigravity CLI | `agy --print` 目前还不能可靠提供 |
 | Gemini CLI（旧版） | Gemini CLI 返回的 ACP 费用元数据；仅用于旧版兼容 |
 | Qwen Code | Qwen Code 返回的 ACP 令牌与费用元数据 |
+| Devin | ACP 报告的会话积分总额，按月度支出显示 |
 | OpenCode | 从 ACP 与会话费用元数据汇总的月度支出 |
 | MiMoCode | 从 ACP 与会话费用元数据汇总的月度支出 |
 | Kimi Code | 从 ACP 与会话费用元数据汇总的月度支出 |
@@ -435,7 +461,7 @@ Obsidian 社区插件市场是推荐的安装方式。GitHub Releases 仍会提�
 
 ## 路线图
 
-目前 Grimoire 随 Claude Code、Codex、Antigravity CLI、Gemini CLI（旧版）、OpenCode、MiMoCode、Kimi Code、Grok Build 和 Qwen Code 一同发布。
+目前 Grimoire 随 Codex、Claude Code、Antigravity CLI、Gemini CLI（旧版）、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code 和 Devin 一同发布。
 
 下一步计划包括 GitHub Copilot CLI、其他 ACP 兼容供应商，以及运行时足够稳定、可嵌入 Obsidian 的本地模型 CLI。实现说明位于 [provider-roadmap.md](../provider-roadmap.md)。
 

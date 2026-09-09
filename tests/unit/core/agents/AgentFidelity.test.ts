@@ -19,7 +19,7 @@ describe('AgentFidelity', () => {
   it('reads the catalog it is meant to be projecting', () => {
     // Guards every assertion below: an empty catalog satisfies a per-module
     // rule for the same reason a correct one does.
-    expect(modules).toHaveLength(9);
+    expect(modules).toHaveLength(10);
   });
 
   it.each(modules.map(module => [module.manifest.id, module] as const))(
@@ -49,8 +49,8 @@ describe('AgentFidelity', () => {
     // In the catalog's own order, which is the order providers are presented
     // in, so this line reads the way the settings list does.
     ))).toEqual([
-      'claude: full',
       'codex: aggregate',
+      'claude: full',
       'opencode: none',
       'grok: none',
       'mimocode: none',
@@ -58,6 +58,7 @@ describe('AgentFidelity', () => {
       'antigravity: none',
       'gemini: none',
       'qwen: none',
+      'devin: none',
     ]);
   });
 

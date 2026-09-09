@@ -12,8 +12,8 @@ Grimoire itself does not require payment and does not sell access to any hosted 
 
 Full functionality requires at least one external CLI provider. Those providers may require an account, subscription, API key, or paid usage:
 
-- Claude Code may require a Claude account, subscription, or API key.
 - Codex may require an OpenAI or ChatGPT account, plan access, or API key.
+- Claude Code may require a Claude account, subscription, or API key.
 - Antigravity CLI may require an eligible Google account and the model access available to that account.
 - Gemini CLI (Legacy) may require a Google account, Gemini API key, or Vertex AI configuration.
 - OpenCode may require provider credentials for the model vendors configured by the user.
@@ -21,6 +21,7 @@ Full functionality requires at least one external CLI provider. Those providers 
 - Kimi Code may require a Moonshot AI account or the credentials for a configured supported provider.
 - Grok Build may require a Grok/xAI account, subscription, OAuth access, or API key.
 - Qwen Code may require an Alibaba ModelStudio, third-party provider, or custom-provider account and configuration.
+- Devin may require a Cognition account signed in through `devin auth login`; which models it offers is decided by that account.
 
 Provider billing, quotas, rate limits, retention, and account requirements are controlled by the provider, not by Grimoire.
 
