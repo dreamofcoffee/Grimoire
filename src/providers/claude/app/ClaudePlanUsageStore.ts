@@ -38,14 +38,7 @@ export class ClaudePlanUsageStore extends ProviderSpendUsageStore {
   }
 
   recordSdkMessage(message: SDKMessage | Record<string, unknown>): boolean {
-    const rateLimitWindows = parseUnifiedRateLimitWindows(message);
-    const eventWindow = parseClaudeRateLimitWindow(message);
-    // The event-level window is frequently reset-only, so it must not replace a
-    // key already resolved from `unifiedWindows`, which reports the percentage.
-    if (eventWindow && !rateLimitWindows.some(entry => entry.key === eventWindow.key)) {
-      rateLimitWindows.push(eventWindow);
-    }
-
+    const rateLimitWindows = parseClaudeRateLimitWindows(message);
     if (rateLimitWindows.length > 0) {
       let quotaChanged = false;
       for (const { key, window } of rateLimitWindows) {
@@ -111,12 +104,28 @@ export class ClaudePlanUsageStore extends ProviderSpendUsageStore {
 
 export const claudePlanUsageStore = new ClaudePlanUsageStore();
 
-function parseClaudeRateLimitWindow(message: SDKMessage | Record<string, unknown>): ClaudeRateLimitWindowEntry | null {
+/**
+ * Every window one `rate_limit_event` reports: the per-window percentages in
+ * `unifiedWindows` first, then the event-level window for a key they did not
+ * report. The event-level record is frequently reset-only, so it must never
+ * replace a key already resolved from `unifiedWindows`.
+ */
+function parseClaudeRateLimitWindows(message: SDKMessage | Record<string, unknown>): ClaudeRateLimitWindowEntry[] {
   if (!isRecord(message) || message.type !== 'rate_limit_event' || !isRecord(message.rate_limit_info)) {
-    return null;
+    return [];
   }
 
   const info = message.rate_limit_info;
+  const entries = parseUnifiedRateLimitWindows(info);
+  const eventWindow = parseEventRateLimitWindow(info);
+  if (eventWindow && !entries.some(entry => entry.key === eventWindow.key)) {
+    entries.push(eventWindow);
+  }
+
+  return entries;
+}
+
+function parseEventRateLimitWindow(info: Record<string, unknown>): ClaudeRateLimitWindowEntry | null {
   const rateLimitType = readRateLimitType(info.rateLimitType);
   if (!rateLimitType) {
     return null;
@@ -148,16 +157,10 @@ function parseClaudeRateLimitWindow(message: SDKMessage | Record<string, unknown
  * known window, suppresses the quota readout entirely.
  *
  * The field is absent from the published SDK types, so it is read defensively:
- * anything unexpected falls back to the event-level window parsed above.
+ * anything unexpected falls back to the event-level window.
  */
-function parseUnifiedRateLimitWindows(
-  message: SDKMessage | Record<string, unknown>,
-): ClaudeRateLimitWindowEntry[] {
-  if (!isRecord(message) || message.type !== 'rate_limit_event' || !isRecord(message.rate_limit_info)) {
-    return [];
-  }
-
-  const unifiedWindows = message.rate_limit_info.unifiedWindows;
+function parseUnifiedRateLimitWindows(info: Record<string, unknown>): ClaudeRateLimitWindowEntry[] {
+  const unifiedWindows = info.unifiedWindows;
   if (!isRecord(unifiedWindows)) {
     return [];
   }

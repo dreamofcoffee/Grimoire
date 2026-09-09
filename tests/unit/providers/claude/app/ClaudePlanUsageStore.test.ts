@@ -318,6 +318,32 @@ describe('ClaudePlanUsageStore', () => {
     });
   });
 
+  it('prefers the unifiedWindows percentage over the event-level one for the same key', () => {
+    const store = new ClaudePlanUsageStore();
+
+    store.recordSdkMessage({
+      type: 'rate_limit_event',
+      rate_limit_info: {
+        status: 'allowed',
+        rateLimitType: 'five_hour',
+        resetsAt: '5:00 PM',
+        utilization: 0.12,
+        unifiedWindows: {
+          five_hour: { utilization: 0.63, resetsAt: '5:00 PM' },
+        },
+      },
+    });
+
+    expect(store.getCachedUsage({
+      plugin: {} as any,
+      providerId: 'claude',
+      settings: {},
+    })).toEqual({
+      plan: 'Claude Code',
+      windows: [{ label: '5-hr', pct: 63, reset: '5:00 PM' }],
+    });
+  });
+
   it('falls back to the event window when unifiedWindows is unusable', () => {
     const store = new ClaudePlanUsageStore();
 
