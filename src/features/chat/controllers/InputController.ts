@@ -47,6 +47,7 @@ import type { CanvasSelectionContext } from '../../../utils/canvas';
 import type { EditorSelectionContext } from '../../../utils/editor';
 import { splitContextPaths } from '../../../utils/externalContext';
 import { appendMarkdownSnippet } from '../../../utils/markdown';
+import { ChatTurnCancelledError } from '../application/ChatExecutionCoordinator';
 import { buildImageGenerationPrompt } from '../imageGeneration';
 import type { QueuePauseReason } from '../queue/MessageQueue';
 import { InlineAskUserQuestion } from '../rendering/InlineAskUserQuestion';
@@ -309,7 +310,8 @@ export class InputController {
 
     const contentOverride = options?.content;
     const shouldUseInput = contentOverride === undefined;
-    const content = (contentOverride ?? inputEl.value).trim();
+    const originalInput = inputEl.value;
+    const content = (contentOverride ?? originalInput).trim();
     const displayContentOverride = options?.displayContentOverride?.trim();
     const imageOverride = options?.images;
     const hasImages = imageOverride !== undefined
@@ -424,12 +426,6 @@ export class InputController {
     // SDK handles expansion, $ARGUMENTS, @file references, and frontmatter options
     const images = imageOverride ?? imageContextManager?.getAttachedImages() ?? [];
     const imagesForMessage = images.length > 0 ? [...images] : undefined;
-    // A resend or a queued turn carries attachments straight off an existing
-    // message, whose bytes are left out of session metadata. The provider is
-    // about to write them to a file for the CLI, so refill them first.
-    if (plugin.storage?.attachments) {
-      await hydrateImages(imagesForMessage, plugin.storage.attachments);
-    }
     const isCompact = /^\/compact(\s|$)/i.test(content);
     plugin.recordDebugLog?.({
       data: {
@@ -447,9 +443,40 @@ export class InputController {
       imageContextManager?.clearImages();
     }
 
-    let turnSubmission: TurnSubmission;
+    let turnSubmission: TurnSubmission | undefined;
+    const restoreUnsent = () => {
+      if (state.streamGeneration !== streamGeneration) return;
+      const cancelled = state.cancelRequested;
+      state.isStreaming = false;
+      state.cancelRequested = false;
+      streamController.hideThinkingIndicator();
+      streamController.stopTurnSilenceIndicator();
+      this.activeStreamingAssistantMessage = null;
+      if (shouldUseInput && !inputEl.value && !imageContextManager?.hasImages()) {
+        inputEl.value = originalInput;
+        this.deps.resetInputHeight();
+        imageContextManager?.setImages(imagesForMessage ?? []);
+      } else {
+        // Preserve a newer draft and return a drained message to its queue slot.
+        state.queue.insertAt(0, this.createQueuedMessage(
+          turnSubmission?.displayContent ?? displayContentOverride ?? content,
+          turnSubmission?.turnRequest ?? options?.turnRequestOverride ?? {
+            text: content, images: imagesForMessage,
+            editorSelection: options?.editorContextOverride,
+            browserSelection: options?.browserContextOverride,
+            canvasSelection: options?.canvasContextOverride,
+          },
+        ));
+      }
+      this.pauseQueue(cancelled ? 'cancelled' : 'failed');
+      this.updateQueueIndicator();
+    };
+    const preparationCancelled = () => state.cancelRequested || state.streamGeneration !== streamGeneration;
     let queryOptions: ChatRuntimeQueryOptions | undefined;
     try {
+      if (plugin.storage?.attachments) {
+        await hydrateImages(imagesForMessage, plugin.storage.attachments);
+      }
       const turnSubmissionResult = options?.turnRequestOverride
         ? {
           displayContent: content,
@@ -476,12 +503,7 @@ export class InputController {
         model: workspaceQueryOptions?.model ?? (typeof activeModel === 'string' ? activeModel : undefined),
       };
     } catch (error) {
-      state.isStreaming = false;
-      if (shouldUseInput) {
-        inputEl.value = content;
-        this.deps.resetInputHeight();
-        imageContextManager?.setImages(imagesForMessage ?? []);
-      }
+      restoreUnsent();
       if (error instanceof ProjectWorkspaceRoutingError) {
         new Notice(error.message);
         return;
@@ -489,8 +511,7 @@ export class InputController {
       throw error;
     }
     const { displayContent, turnRequest } = turnSubmission;
-
-    fileContextManager?.markCurrentNoteSent();
+    if (preparationCancelled()) { restoreUnsent(); return; }
 
     const userCompletedAt = Date.now();
     // Reassigned on the projection path once the turn is durable, so the block
@@ -506,37 +527,25 @@ export class InputController {
       images: imagesForMessage,
       vaultSearchContext: turnRequest.vaultSearchContext,
     };
-    // **Every provider is on this path**, so a tab without one cannot send. The
-    // only way to be here is a tab whose provider left the catalog or one built
-    // before the kernel did — and the second resolves on the next attempt,
-    // because the tab asks again every time.
-    //
-    // **So the message has to survive the refusal.** The composer was cleared
-    // and the images detached on the way here; a refusal that kept them cleared
-    // would destroy what the person typed at the one moment they are told to
-    // try again. Restored the way the `catch` below restores them, which is the
-    // shape this was missing.
     const projection = this.deps.getProjectionExecution?.() ?? null;
     if (!projection) {
       new Notice(t('chat.ui.errors.agentUnavailable'));
-      streamController.hideThinkingIndicator();
-      streamController.stopTurnSilenceIndicator();
-      state.isStreaming = false;
-      if (shouldUseInput) {
-        inputEl.value = content;
-        this.deps.resetInputHeight();
-        imageContextManager?.setImages(imagesForMessage ?? []);
-      }
+      restoreUnsent();
       return;
     }
-    state.hasPendingConversationSave = true;
 
     // Both messages arrive from the projection: the question when the
     // coordinator has made it durable, and the answer as a turn the target
     // opens. Adding either here would draw it twice — and the question would be
     // drawn before it was recorded, which is the one thing the barrier exists
     // to stop being possible.
-    await this.triggerTitleGeneration(userMsg);
+    try {
+      await this.triggerTitleGeneration(userMsg);
+    } catch (error) {
+      restoreUnsent();
+      new Notice(error instanceof Error ? error.message : t('chat.ui.errors.initializeAgentFailed'));
+      return;
+    }
 
     let assistantMsg = this.createAssistantMessage(queryOptions);
 
@@ -551,31 +560,30 @@ export class InputController {
     // read by the legacy generator branch, and the generation is the whole of
     // it now — see the comment further down that says so.
     let turnFailed = false;
+    let preparationAborted = false;
     let didEnqueueToSdk = false;
     let planCompleted = false;
     /** What the provider addressed this turn by, as the completion reports it. */
     let turnIdentities: { userMessageId?: string; assistantMessageId?: string } = {};
 
-    // Lazy initialization: ensure service is ready before first query
-    if (this.deps.ensureServiceInitialized) {
-      const ready = await this.deps.ensureServiceInitialized();
-      if (!ready) {
+    // Initialization can suspend while Stop is pressed or the tab changes.
+    if (preparationCancelled()) { restoreUnsent(); return; }
+    try {
+      if (this.deps.ensureServiceInitialized && !await this.deps.ensureServiceInitialized()) {
         new Notice(t('chat.ui.errors.initializeAgentFailed'));
-        streamController.hideThinkingIndicator();
-        streamController.stopTurnSilenceIndicator();
-        state.isStreaming = false;
-        this.activeStreamingAssistantMessage = null;
+        restoreUnsent();
         return;
       }
+    } catch (error) {
+      restoreUnsent();
+      new Notice(error instanceof Error ? error.message : t('chat.ui.errors.initializeAgentFailed'));
+      return;
     }
-
+    if (preparationCancelled()) { restoreUnsent(); return; }
     const agentService = this.getAgentService();
     if (!agentService) {
       new Notice(t('chat.ui.errors.agentUnavailable'));
-      streamController.hideThinkingIndicator();
-      streamController.stopTurnSilenceIndicator();
-      state.isStreaming = false;
-      this.activeStreamingAssistantMessage = null;
+      restoreUnsent();
       return;
     }
 
@@ -610,6 +618,7 @@ export class InputController {
       }
     }
 
+    if (preparationCancelled()) { restoreUnsent(); return; }
     streamController.startTurnSilenceIndicator(this.getActiveProviderId());
 
     try {
@@ -644,6 +653,9 @@ export class InputController {
           sessionInvalidated: agentService.consumeSessionInvalidation?.() ?? false,
         }),
       });
+      await submitted.ticket.started;
+      state.hasPendingConversationSave = true;
+      fileContextManager?.markCurrentNoteSent();
       userMsg.content = submitted.userMessage.content;
       userMsg.currentNote = submitted.userMessage.currentNote;
       const completed = await submitted.ticket.completion;
@@ -652,7 +664,8 @@ export class InputController {
       // interleaves.
       await projection.settled();
       didEnqueueToSdk = completed.terminal.kind !== 'invalidated';
-      wasInterrupted = completed.terminal.kind === 'cancelled';
+      wasInterrupted = completed.terminal.kind === 'cancelled' || completed.terminal.kind === 'interrupted';
+      turnFailed = completed.terminal.kind !== 'succeeded' && !wasInterrupted;
       planCompleted = completed.planCompleted === true;
       // The messages the projection drew and the barrier stored are the ones
       // everything after a turn writes to: the native identities a rewind
@@ -663,9 +676,19 @@ export class InputController {
       this.activeStreamingAssistantMessage = assistantMsg;
       turnIdentities = {
         ...(completed.userMessageId ? { userMessageId: completed.userMessageId } : {}),
-        ...(completed.assistantMessageId ? { assistantMessageId: completed.assistantMessageId } : {}),
+        ...(completed.nativeAssistantMessageId ? { assistantMessageId: completed.nativeAssistantMessageId } : {}),
       };
     } catch (error) {
+      if (error instanceof ChatTurnCancelledError) {
+        await projection.settled();
+        if (!findMessage(state.messages, userMsg.id)) {
+          restoreUnsent();
+          preparationAborted = true;
+        } else {
+          wasInterrupted = true;
+        }
+        return;
+      }
       plugin.recordDebugLog?.({
         data: {
           providerId: this.getActiveProviderId(),
@@ -704,7 +727,7 @@ export class InputController {
       // moved on mid-turn; with that loop gone it was never set, which left the
       // recovery at the end of this block unreachable and a steer that raced a
       // conversation switch stuck on "Steering…" for the life of the tab.
-      const invalidated = state.streamGeneration !== streamGeneration;
+      const invalidated = preparationAborted || state.streamGeneration !== streamGeneration;
       const finalAssistantMsg = this.activeStreamingAssistantMessage ?? assistantMsg;
       // **From the completion, not from the runtime.** The turn-metadata member
       // this replaces read the same three facts off the same envelopes, one
@@ -820,7 +843,7 @@ export class InputController {
         let planAutoSendContent: string | null = null;
         let planApprovalInvalidated = false;
         let shouldProcessQueuedMessage = true;
-        if (planCompleted && !didCancelThisTurn) {
+        if (planCompleted && !didCancelThisTurn && !turnFailed) {
           const { decision, invalidated } = await this.showPlanApproval();
 
           // Re-check invalidation after async approval prompt

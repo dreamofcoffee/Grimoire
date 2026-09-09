@@ -53,6 +53,31 @@ const showInsertion = StateEffect.define<{
 }>();
 const hideInlineEdit = StateEffect.define<null>();
 
+const inlineEditRangeField = StateField.define<{ from: number; to: number; valid: boolean } | null>({
+  create: () => null,
+  update: (range, tr) => {
+    if (range && tr.docChanged) {
+      const { from, to } = range;
+      let valid = range.valid;
+      tr.changes.iterChangedRanges((start, end) => {
+        if (from === to ? start <= from && end >= from : start < to && end > from) {
+          valid = false;
+        }
+      });
+      const mappedFrom = tr.changes.mapPos(from, 1);
+      range = { from: mappedFrom, to: Math.max(mappedFrom, tr.changes.mapPos(to, -1)), valid };
+    }
+    for (const effect of tr.effects) {
+      if (effect.is(showInlineEdit)) {
+        range = { from: effect.value.selFrom, to: effect.value.selTo, valid: true };
+      } else if (effect.is(hideInlineEdit)) {
+        range = null;
+      }
+    }
+    return range;
+  },
+});
+
 let activeController: InlineEditController | null = null;
 
 class DiffWidget extends WidgetType {
@@ -282,6 +307,7 @@ export class InlineEditModal {
 }
 
 class InlineEditController {
+  private disposed = false;
   private inputEl: HTMLInputElement | null = null;
   private spinnerEl: HTMLElement | null = null;
   private agentReplyEl: HTMLElement | null = null;
@@ -379,7 +405,7 @@ class InlineEditController {
   show() {
     if (!installedEditors.has(this.editorView)) {
       this.editorView.dispatch({
-        effects: StateEffect.appendConfig.of(inlineEditField),
+        effects: StateEffect.appendConfig.of([inlineEditField, inlineEditRangeField]),
       });
       installedEditors.add(this.editorView);
     }
@@ -509,6 +535,7 @@ class InlineEditController {
   }
 
   private async generate() {
+    if (this.disposed) return;
     if (!this.inputEl || !this.spinnerEl) return;
     const userMessage = this.inputEl.value.trim();
     if (!userMessage) return;
@@ -548,6 +575,7 @@ class InlineEditController {
       }
     }
 
+    if (this.disposed) return;
     this.spinnerEl.addClass('grimoire-hidden');
 
     if (result.success) {
@@ -591,6 +619,7 @@ class InlineEditController {
 
   private showDiffInPlace() {
     if (this.editedText === null) return;
+    if (!this.syncRange()) { this.reject(); return; }
 
     hideSelectionHighlight(this.editorView);
 
@@ -610,6 +639,7 @@ class InlineEditController {
 
   private showInsertionInPlace() {
     if (this.insertedText === null) return;
+    if (!this.syncRange()) { this.reject(); return; }
 
     hideSelectionHighlight(this.editorView);
 
@@ -643,7 +673,17 @@ class InlineEditController {
     this.getOwnerDocument().addEventListener('keydown', this.escHandler);
   }
 
+  private syncRange(): boolean {
+    const range = this.editorView.state.field(inlineEditRangeField, false);
+    if (!range) return true;
+    this.selFrom = range.from;
+    this.selTo = range.to;
+    return range.valid;
+  }
+
   accept() {
+    if (this.disposed) return;
+    if (!this.syncRange()) { this.reject(); return; }
     const textToInsert = this.editedText ?? this.insertedText;
     if (textToInsert !== null) {
       // Convert CM6 positions back to Obsidian Editor positions
@@ -663,6 +703,8 @@ class InlineEditController {
   }
 
   reject() {
+    if (this.disposed) return;
+    this.syncRange();
     this.cleanup({ keepSelectionHighlight: true });
     this.restoreSelectionHighlight();
     this.resolve({ decision: 'reject' });
@@ -677,6 +719,7 @@ class InlineEditController {
   }
 
   private cleanup(options?: { keepSelectionHighlight?: boolean }) {
+    this.disposed = true;
     this.inlineEditService.cancel();
     this.inlineEditService.resetConversation();
     this.isConversing = false;

@@ -8,13 +8,14 @@ import {
   runId,
 } from '@/core/execution/ExecutionIds';
 import type { ChatTurnEncoder } from '@/core/runtime/execution/ExecutionChatRuntimeAdapter';
-import type { ChatRuntimeQueryOptions, ChatTurnRequest } from '@/core/runtime/types';
+import type { ChatRuntimeQueryOptions, ChatTurnMetadata, ChatTurnRequest } from '@/core/runtime/types';
 import type { ChatMessage } from '@/core/types';
 import {
   type ChatConversationPort,
   ChatExecutionCoordinator,
   type ChatExecutionLifecyclePort,
   type ChatSessionBinding,
+  ChatTurnCancelledError,
   type ChatTurnTicket,
 } from '@/features/chat/application/ChatExecutionCoordinator';
 import {
@@ -119,6 +120,7 @@ export class ChatExecutionComposition {
     // built from an earlier read has none of it. Encoding the history from the
     // stale one sends the provider a poorer transcript than the one on screen.
     const conversation = await this.coordinator.reloadConversation(command.conversationId);
+    if (command.isCancelled?.()) throw new ChatTurnCancelledError();
     const prepared = command.encoder.prepareTurn(command.request);
     const requestRef = command.encoder.encodeRequestRef(
       prepared,
@@ -144,6 +146,8 @@ export class ChatExecutionComposition {
       ...(command.nativeSessionRef ? { nativeSessionRef: command.nativeSessionRef } : {}),
       ...(command.resumeCheckpoint ? { resumeCheckpoint: command.resumeCheckpoint } : {}),
       ...(command.sessionBinding ? { sessionBinding: command.sessionBinding } : {}),
+      ...(command.turnMetadata ? { turnMetadata: command.turnMetadata } : {}),
+      ...(command.isCancelled ? { isCancelled: command.isCancelled } : {}),
     });
     // Handed back because the surface has already drawn its own copy: the
     // legacy path overwrites the message it rendered with what the provider
@@ -182,6 +186,8 @@ export interface SubmitChatMessageCommand {
   readonly resumeCheckpoint?: string;
   /** What the conversation's provider binding is once the turn has ended. */
   readonly sessionBinding?: () => ChatSessionBinding | null;
+  readonly turnMetadata?: () => Promise<ChatTurnMetadata | null> | ChatTurnMetadata | null;
+  readonly isCancelled?: () => boolean;
 }
 
 function opaqueId(prefix: string): string {

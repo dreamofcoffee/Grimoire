@@ -1,6 +1,5 @@
 import type { AttachmentStore } from '@/core/attachments/AttachmentStore';
 import {
-  collectReferencedHashes,
   hydrateImageAttachments,
   hydrateImages,
 } from '@/core/attachments/hydrateImages';
@@ -91,27 +90,5 @@ describe('hydrateImages', () => {
 
     await expect(hydrateImages(undefined, store)).resolves.toBeUndefined();
     expect(store.read).not.toHaveBeenCalled();
-  });
-});
-
-describe('collectReferencedHashes', () => {
-  it('gathers every hash still referenced, across conversations', () => {
-    const other = 'b'.repeat(64);
-
-    const hashes = collectReferencedHashes([
-      { messages: [messageWithImage({ hash: HASH })] },
-      { messages: [messageWithImage({ hash: other })] },
-      { messages: [messageWithImage({ hash: HASH })] },
-    ]);
-
-    expect(hashes).toEqual(new Set([HASH, other]));
-  });
-
-  it('skips attachments that were never stored', () => {
-    expect(collectReferencedHashes([{ messages: [messageWithImage({})] }])).toEqual(new Set());
-  });
-
-  it('handles conversations without messages', () => {
-    expect(collectReferencedHashes([{}, { messages: [] }])).toEqual(new Set());
   });
 });
