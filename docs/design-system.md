@@ -376,9 +376,15 @@ the toolbar, because a line inside a box that has one is a second box.
 
 ### 11.5 History
 
-A 352px popover hanging off the button that opened it, at `top: 44px; right: 8px`, radius 8,
+A 480px popover hanging off the button that opened it, at `top: 44px; right: 8px`, radius 8,
 `--grimoire-lift-1`. It was a sheet inset 13px on all four sides: looking for another conversation is
 not a reason to lose sight of this one.
+
+The cap was 352, and a cap is only doing work above the pane width where `calc(100% - 16px)` stops
+being the smaller half of the `min()`. Below 368px the popover is sized by its pane and the number is
+inert, which is the default right sidebar; above it the title's room froze at 317px, so a 1000px tab
+scanned the same 55 characters a 400px one did. 480 gives the title about 70 characters, inside the
+45-75 a reader scans; the full tab width this list carried before Nordic is what put it past that.
 
 A 34px search row, then rows of 56px at radius 4 with a hover wash. The open conversation carries a
 1.5px accent leading rule. A row is two lines: the title has the first to itself, full width, and

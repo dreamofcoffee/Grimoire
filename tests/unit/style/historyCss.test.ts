@@ -23,7 +23,7 @@ describe('history.css', () => {
     expect(menuRule).toContain('right: var(--grimoire-space-8)');
     expect(menuRule).toContain('bottom: auto');
     expect(menuRule).toContain('left: auto');
-    expect(menuRule).toContain('width: min(352px, calc(100% - var(--grimoire-space-16)))');
+    expect(menuRule).toContain('width: min(480px, calc(100% - var(--grimoire-space-16)))');
     expect(menuRule).toContain('box-shadow: var(--grimoire-lift-1)');
     expect(getRule(css, '.grimoire-history-menu.visible')).toContain('display: grid');
     // No header band, so no close button in one: the panel opens on its search

@@ -2,6 +2,14 @@
  * History is a popover hanging off the control that opened it, not a sheet
  * covering the conversation behind it. Looking for another conversation is not
  * a reason to lose sight of this one.
+ *
+ * The cap was 352px, which froze the title's room at 317px however wide the
+ * pane grew: a 1000px tab scanned the same 55 characters a 400px one did, so a
+ * number written for the wide case did nothing in it. 480 buys about 70
+ * characters, which is inside the measure a reader can scan; the full tab width
+ * this list once used is what put it past that. The second half of `min()` is
+ * untouched, so the default right-sidebar pane is governed by its own width as
+ * before and sees no change at all.
  */
 .grimoire-history-menu {
   position: absolute;
@@ -12,7 +20,7 @@
   z-index: 40;
   display: none;
   box-sizing: border-box;
-  width: min(352px, calc(100% - var(--grimoire-space-16)));
+  width: min(480px, calc(100% - var(--grimoire-space-16)));
   max-height: min(520px, calc(100% - var(--grimoire-header-h) - var(--grimoire-space-24)));
   overflow: hidden;
   border: 1px solid var(--grimoire-line);
