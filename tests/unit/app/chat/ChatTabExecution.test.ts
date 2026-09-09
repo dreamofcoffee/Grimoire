@@ -1,4 +1,5 @@
 import { createMockEl } from '@test/helpers/mockElement';
+import { buildSDKMessage } from '@test/helpers/sdkMessages';
 import { TestDurableStorage } from '@test/unit/core/persistence/TestDurableStorage';
 
 import { ChatExecutionComposition } from '@/app/chat/ChatExecutionComposition';
@@ -19,7 +20,10 @@ import type {
   ChatMessageOperations,
   ChatStreamingCursor,
   ChatStreamOperations,
+  ChatSurfaceRenderTargetDeps,
 } from '@/features/chat/rendering/ChatSurfaceRenderTarget';
+import { ClaudeContentPresenter } from '@/providers/claude/execution/ClaudeContentPresenter';
+import { ClaudeProjectionResultSink } from '@/providers/claude/execution/ClaudeProjectionResultSink';
 
 /**
  * One tab's end of the path, over the real kernel and the real vault.
@@ -128,6 +132,7 @@ async function createTab(options: {
   readonly encoder?: ChatTurnEncoder | null;
   /** What the provider says about the turn that just ended, when it says anything. */
   readonly turnMetadata?: () => ChatTurnMetadata | null;
+  readonly presentProviderContent?: ChatSurfaceRenderTargetDeps['presentProviderContent'];
 } = {}) {
   const storage = new TestDurableStorage();
   const now = () => 1_000;
@@ -164,7 +169,7 @@ async function createTab(options: {
     composition,
     providerId: 'claude',
     backendId: BACKEND_ID,
-    surface: drawn.binding,
+    surface: { ...drawn.binding, ...(options.presentProviderContent ? { presentProviderContent: options.presentProviderContent } : {}) },
     turnEncoder: () => (options.encoder === undefined ? encoder : options.encoder),
     ...(options.turnMetadata ? { turnMetadata: options.turnMetadata } : {}),
     createConversation: async () => {
@@ -345,10 +350,9 @@ describe('chat tab execution', () => {
     const completed = await submitted.ticket.completion;
 
     expect(completed.planCompleted).toBe(true);
-    // **Only the plan.** The identities are the kernel's, and a provider's copy
-    // overwriting them would put a second answer to one question back into the
-    // path the migration took one out of.
+    // Native checkpoints never replace the projection's display identity.
     expect(completed.assistantMessageId).not.toBe('provider-answer');
+    expect(completed.nativeAssistantMessageId).toBe('provider-answer');
     // Once per turn: the read is destructive, and it carries the provider's own
     // per-turn side effects with it.
     expect(reads).toHaveLength(1);
@@ -387,4 +391,58 @@ describe('chat tab execution', () => {
     expect(completed.planCompleted).toBeUndefined();
     app.composition.dispose();
   });
+});
+
+test('the persisted Claude checkpoint must remain a native message UUID', async () => {
+  const nativeId = '8baecb38-3c01-4bc9-8447-2ec235a2057c';
+  const presenter = new ClaudeContentPresenter({ settings: () => ({}) });
+  const app = await createTab({
+    presentProviderContent: payload => presenter.present(payload).filter(chunk => chunk.type !== 'error'),
+    turnMetadata: () => ({ ...presenter.consumeTurnMetadata(), userMessageId: 'native-question' }),
+  });
+  try {
+    const { ticket } = await app.tab.send({ text: 'Hello' }, userMessage('msg-1', 'Hello'));
+    const started = await ticket.started;
+    const outcome = await new ClaudeProjectionResultSink().storeResult({
+      runId: started.runId, output: 'Answer', source: 'assistant', signal: new AbortController().signal,
+    });
+    if (outcome.kind !== 'committed') throw new Error('Unexpected result outcome');
+    app.backend.emit(started.runId, { kind: 'output-delta', channel: 'assistant', text: 'Answer' });
+    app.backend.emit(started.runId, { kind: 'provider-content', payload: buildSDKMessage({
+      type: 'assistant', uuid: nativeId,
+      message: { content: [{ type: 'text', text: 'Answer' }] },
+    }) });
+    app.backend.emit(started.runId, { kind: 'result', result: outcome.result });
+    app.backend.emit(started.runId, { kind: 'terminal', terminal: 'succeeded', reason: 'completed' });
+    await ticket.completion;
+    const record = await app.repository.read('conv-1');
+    if (record.kind !== 'present') throw new Error('Conversation missing');
+    expect(record.metadata.messages?.at(-1)?.assistantMessageId).toBe(nativeId);
+    expect(record.metadata.messages?.[0]?.userMessageId).toBe('native-question');
+  } finally {
+    app.composition.dispose();
+  }
+});
+
+test('Stop during conversation loading prevents dispatch', async () => {
+  const app = await createTab();
+  let release!: () => void;
+  let entered!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const loading = new Promise<void>(resolve => { entered = resolve; });
+  const reload = app.composition.coordinator.reloadConversation.bind(app.composition.coordinator);
+  jest.spyOn(app.composition.coordinator, 'reloadConversation').mockImplementation(async id => {
+    entered();
+    await gate;
+    return reload(id);
+  });
+  const start = jest.spyOn(app.registry, 'startRun');
+  const sending = app.tab.send({ text: 'Do work' }, userMessage('msg-1', 'Do work'));
+  const rejected = sending.catch(error => error as Error);
+  await loading;
+  await app.tab.cancel();
+  release();
+  expect(await rejected).toEqual(expect.objectContaining({ message: 'Chat turn was cancelled before dispatch.' }));
+  expect(start).not.toHaveBeenCalled();
+  app.composition.dispose();
 });

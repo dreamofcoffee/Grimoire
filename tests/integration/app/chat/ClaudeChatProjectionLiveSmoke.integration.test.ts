@@ -164,6 +164,7 @@ live('Claude chat projection live smoke', () => {
       // The vault the CLI is working in, so the column normalizes a written
       // file's path against the same root the product would.
       vaultPath: vault,
+      ...(vaultAdapter ? { vaultAdapter } : {}),
       // What `ConversationController` does when a conversation is opened. The
       // presenter's session belongs to the conversation it was told about.
       syncConversation: true,
@@ -240,6 +241,9 @@ live('Claude chat projection live smoke', () => {
     const storedAnswer = messages.find(message => message.role === 'assistant');
     expect(storedAnswer?.id).toBe(assistants[0]?.id);
     expect(storedAnswer?.content.trim()).not.toBe('');
+    expect(storedAnswer?.assistantMessageId).toMatch(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i);
+    expect(completed.nativeAssistantMessageId).toBe(storedAnswer?.assistantMessageId);
+    expect(storedAnswer?.assistantMessageId).not.toBe(storedAnswer?.id);
   });
 
   it('row B: asks once before it writes, and the answer continues the turn', async () => {
@@ -266,10 +270,11 @@ live('Claude chat projection live smoke', () => {
     // answer nobody was there to give — and a suite timeout reports that as
     // "the test took too long" rather than as what it is. Failing here says
     // what was asked and what came back.
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     const ended = await Promise.race([
       submitted.ticket.completion.then(() => 'ended' as const),
-      new Promise<'waiting'>(resolve => { setTimeout(() => resolve('waiting'), 120_000); }),
-    ]);
+      new Promise<'waiting'>(resolve => { timeout = setTimeout(() => resolve('waiting'), 120_000); }),
+    ]).finally(() => clearTimeout(timeout));
     await tab.settled();
 
     report('ROW B', ended, JSON.stringify(asked), JSON.stringify(column.chunks.map(c => c.type)));
@@ -334,6 +339,44 @@ live('Claude chat projection live smoke', () => {
     report('ROW C', completed.terminal.kind, JSON.stringify(column.drawn.join('').slice(0, 160)));
     expect(completed.terminal.kind).toBe('succeeded');
     expect(column.drawn.join('').toLowerCase()).toContain('tomato');
+  });
+
+  it('row D: resumes the native checkpoint stored before a later turn', async () => {
+    const vaultAdapter = createDurableInMemoryVaultAdapter();
+    const first = await createHarness({}, vaultAdapter);
+    const remember = 'Remember the word "tomato". Reply with exactly: ok';
+    const checkpointTurn = await first.harness.tab.send({ text: remember }, userMessage(remember));
+    const completed = await checkpointTurn.ticket.completion;
+    await first.harness.tab.settled();
+    await first.harness.saveAfterTurn();
+    const checkpoint = completed.nativeAssistantMessageId;
+    expect(checkpoint).toBeTruthy();
+
+    const replace = 'Replace the word to remember with "potato". Reply with exactly: ok';
+    await (await first.harness.tab.send({ text: replace }, userMessage(replace))).ticket.completion;
+    await first.harness.tab.settled();
+    await first.harness.saveAfterTurn();
+    await first.harness.sessions.records.apply(CONVERSATION_ID, current => ({
+      ...current,
+      messages: [],
+      resumeAtMessageId: checkpoint,
+    }));
+    await first.release();
+
+    const second = await createHarness({}, vaultAdapter);
+    const stored = await second.harness.sessions.records.read(CONVERSATION_ID);
+    if (stored.kind !== 'present' || !stored.metadata.sessionId) throw new Error('Missing native session');
+    const ask = 'What word did I ask you to remember? Reply with just that word.';
+    const resumed = await second.harness.tab.send({ text: ask }, userMessage(ask), {
+      nativeSessionRef: stored.metadata.sessionId,
+      resumeCheckpoint: checkpoint,
+    });
+    expect((await resumed.ticket.completion).terminal.kind).toBe('succeeded');
+    await second.harness.tab.settled();
+    const answer = second.harness.column.drawn.join('').toLowerCase();
+    expect(answer).toContain('tomato');
+    expect(answer).not.toContain('potato');
+    report('ROW D restored native checkpoint');
   });
 
   // Matrix rows 11, 12 and 13, driven rather than watched: a turn that outlives

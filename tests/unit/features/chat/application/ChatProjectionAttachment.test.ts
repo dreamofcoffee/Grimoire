@@ -262,7 +262,7 @@ describe('chat projection attachment', () => {
     // addresses after one.
     expect(storedMessage?.id).toBe(`assistant-${started.runId}`);
     expect(drawn.state.messages.at(-1)?.id).toBe(storedMessage?.id);
-    expect(storedMessage?.assistantMessageId).toBe(`result-${started.runId}`);
+    expect(storedMessage?.assistantMessageId).toBeUndefined();
   });
 
   it('draws a turn the kernel was already running when the tab opened', async () => {

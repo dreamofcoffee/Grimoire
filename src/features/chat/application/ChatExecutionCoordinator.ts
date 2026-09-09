@@ -40,7 +40,7 @@ import {
   ExecutionInteractionBridge,
   type ExecutionInteractionPresenter,
 } from '../../../core/runtime/execution/ExecutionChatRuntimeAdapter';
-import type { ChatRuntimeConversationState } from '../../../core/runtime/types';
+import type { ChatRuntimeConversationState, ChatTurnMetadata } from '../../../core/runtime/types';
 import type { ChatMessage, Conversation, UsageInfo } from '../../../core/types';
 import {
   type ChatProjection,
@@ -168,6 +168,16 @@ export interface SubmitChatTurnCommand {
    * no provider adapter here to ask.
    */
   readonly sessionBinding?: () => ChatSessionBinding | null;
+  /** Native message identities, consumed once before the persistence barrier. */
+  readonly turnMetadata?: () => Promise<ChatTurnMetadata | null> | ChatTurnMetadata | null;
+  readonly isCancelled?: () => boolean;
+}
+
+export class ChatTurnCancelledError extends Error {
+  constructor() {
+    super('Chat turn was cancelled before dispatch.');
+    this.name = 'ChatTurnCancelledError';
+  }
 }
 
 /**
@@ -190,7 +200,10 @@ export interface StartedChatTurn {
 export interface CompletedChatTurn extends StartedChatTurn {
   readonly terminal: RunTerminal;
   readonly result?: MaterializedChatResult;
+  /** The message id in Grimoire's projection. */
   readonly assistantMessageId?: string;
+  /** The provider's checkpoint, independent of display and result ids. */
+  readonly nativeAssistantMessageId?: string;
   /**
    * Whether a plan decision was answered during this turn.
    *
@@ -227,14 +240,7 @@ export interface ChatExecutionCoordinatorOptions {
   readonly nextExecutionSessionId: () => ExecutionSessionId;
   readonly nextRunId: () => RunId;
   readonly nextLeaseId: () => LifecycleLeaseId;
-  /**
-   * The message id for a run that committed no result of its own.
-   *
-   * A run that did commit one is identified by the provider's own result id,
-   * which is what the presentation adapter reports today and what rewind and
-   * fork address a checkpoint by. Preserving that is the point of the fallback
-   * being a fallback.
-   */
+  /** Stable display identity, including for runs adopted after a reload. */
   readonly assistantMessageIdForRun: (runId: RunId) => string;
   readonly now?: () => number;
 }
@@ -276,6 +282,8 @@ interface ActiveTurn {
    * turns on.
    */
   binding?: { readonly value: ChatSessionBinding | null };
+  metadata?: ChatTurnMetadata;
+  cancellationReason?: CancellationReason;
   executionSessionId?: ExecutionSessionId;
   runId?: RunId;
   dispatched: boolean;
@@ -421,6 +429,7 @@ export class ChatExecutionCoordinator {
     validateTurnCommand(command);
     const entry = await this.requireEntry(command.conversationId);
     this.requireOpen();
+    if (command.isCancelled?.()) throw new ChatTurnCancelledError();
     const admission = entry.active || entry.queue.length > 0 ? 'queued' : 'started';
     const pending: PendingTurn = {
       command,
@@ -443,11 +452,16 @@ export class ChatExecutionCoordinator {
     conversationId: string,
     reason: CancellationReason = { code: 'user' },
   ): Promise<void> {
-    const activeRunId = this.entries.get(conversationId)?.active?.runId;
-    if (!activeRunId) {
+    const active = this.entries.get(conversationId)?.active;
+    if (!active) {
       return;
     }
-    await this.lifecycle.cancelRun(activeRunId, reason);
+    active.cancellationReason = reason;
+    // Before admission returns, the kernel may not have registered the id yet.
+    // startActive checks the intent at each boundary and forwards it afterwards.
+    if (active.dispatched && active.runId) {
+      await this.lifecycle.cancelRun(active.runId, reason);
+    }
   }
 
   /**
@@ -844,6 +858,10 @@ export class ChatExecutionCoordinator {
     command: SubmitChatTurnCommand,
   ): Promise<void> {
     try {
+      const requireNotCancelled = () => {
+        if (active.cancellationReason || command.isCancelled?.()) throw new ChatTurnCancelledError();
+      };
+      requireNotCancelled();
       if (entry.backendId && entry.backendId !== command.backendId) {
         // One conversation, one backend. A second backend over the same
         // conversation would own runs the first one's session does not know
@@ -861,10 +879,12 @@ export class ChatExecutionCoordinator {
         conversation: withUser.conversation,
         revision: withUser.revision,
       });
+      requireNotCancelled();
 
       const owner: ExecutionOwner = { kind: 'conversation', ownerId: command.conversationId };
       const sessionId = entry.sessionId ?? await this.openSession(entry, command, owner);
       this.requireOpen();
+      requireNotCancelled();
       const nextRunId = this.nextRunId();
       active.executionSessionId = sessionId;
       active.runId = nextRunId;
@@ -876,6 +896,9 @@ export class ChatExecutionCoordinator {
         ...(command.resumeCheckpoint ? { resumeCheckpoint: command.resumeCheckpoint } : {}),
       });
       this.establishStartedTurn(entry, active, sessionId, nextRunId);
+      if (active.cancellationReason || command.isCancelled?.()) {
+        await this.lifecycle.cancelRun(nextRunId, active.cancellationReason ?? { code: 'user' });
+      }
     } catch (error) {
       this.abandonTurn(entry, active, error);
     }
@@ -1098,13 +1121,22 @@ export class ChatExecutionCoordinator {
         });
       }
       const completedAt = this.now();
+      if (!active.metadata) {
+        try {
+          active.metadata = await active.submitted?.turnMetadata?.() ?? {};
+        } catch {
+          // A missing native identity must not turn into a fabricated checkpoint.
+          active.metadata = {};
+        }
+      }
+      const metadata = active.metadata;
       const assistantMessage = createAssistantMessage(
         // The identity the turn was given when it started, not one minted here:
         // a surface has been drawing this answer under that id since the first
         // token, and a second identity at the barrier makes the drawn answer
         // and the stored answer two different messages.
         turn?.assistantMessageId ?? this.assistantMessageIdForRun(activeRunId),
-        resultRef,
+        metadata.assistantMessageId,
         streamed,
         completedAt,
       );
@@ -1128,6 +1160,12 @@ export class ChatExecutionCoordinator {
           const completed = completeConversation(
             current, assistantMessage, active.usage, completedAt,
           );
+          const nativeUserId = metadata.userMessageId ?? active.nativeRunRef;
+          if (nativeUserId && active.submitted) {
+            completed.messages = completed.messages.map(message => message.id === active.submitted?.userMessage.id
+              ? { ...message, userMessageId: nativeUserId }
+              : message);
+          }
           // Spread whole rather than field by field: `sessionId: undefined` is
           // how an invalidated binding is cleared, and skipping undefined keys
           // would leave the dead session id behind.
@@ -1152,8 +1190,10 @@ export class ChatExecutionCoordinator {
         terminal,
         ...(materialized ? { result: materialized } : {}),
         ...(assistantMessage ? { assistantMessageId: assistantMessage.id } : {}),
-        ...(answeredAPlan(entry.projection, activeRunId) ? { planCompleted: true } : {}),
-        ...(active.nativeRunRef ? { userMessageId: active.nativeRunRef } : {}),
+        ...(metadata.assistantMessageId ? { nativeAssistantMessageId: metadata.assistantMessageId } : {}),
+        ...(metadata.planCompleted || answeredAPlan(entry.projection, activeRunId) ? { planCompleted: true } : {}),
+        ...(metadata.userMessageId ?? active.nativeRunRef
+          ? { userMessageId: metadata.userMessageId ?? active.nativeRunRef } : {}),
       });
       this.startNext(entry);
     } catch (error) {
@@ -1279,7 +1319,7 @@ function materializeResult(
 
 function createAssistantMessage(
   messageId: string,
-  resultRef: ResultRef | undefined,
+  nativeAssistantMessageId: string | undefined,
   streamed: string | undefined,
   completedAt: number,
 ): ChatMessage | undefined {
@@ -1299,7 +1339,7 @@ function createAssistantMessage(
     // this conversation, and this names the answer in the provider's own terms
     // — which is what a rewind or a fork asks it to resume at. Conflating them
     // was what made the drawn message and the stored one differ.
-    ...(resultRef ? { assistantMessageId: resultRef.resultId } : {}),
+    ...(nativeAssistantMessageId ? { assistantMessageId: nativeAssistantMessageId } : {}),
   };
 }
 

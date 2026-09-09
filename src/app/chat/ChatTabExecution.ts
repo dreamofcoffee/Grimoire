@@ -12,9 +12,9 @@ import type {
 } from '@/core/runtime/types';
 import type { ChatMessage } from '@/core/types';
 import type { ProviderId } from '@/core/types/provider';
-import type {
-  ChatSessionBinding,
-  CompletedChatTurn,
+import {
+  type ChatSessionBinding,
+  ChatTurnCancelledError,
 } from '@/features/chat/application/ChatExecutionCoordinator';
 import type { ChatProjectionAttachment } from '@/features/chat/application/ChatProjectionAttachment';
 
@@ -68,17 +68,10 @@ export interface ChatTabExecutionOptions {
   /**
    * What the provider itself made of the turn that just ended.
    *
-   * Read once, after the turn, and merged into the completion — because one
-   * fact on it is the provider's alone. **A plan is the case**: Grimoire's own
-   * plan approval appears when a turn reports one, the coordinator derives that
-   * from a resolved interaction whose response id names a plan, and no provider
-   * produces such an id. Codex reads its own plan mode and its own plan deltas
-   * instead, and said so to nobody: a live plan turn ended with the provider
-   * holding `planCompleted: true` and the completion holding `undefined`, so the
-   * approval never appeared. The provider's own per-turn reading also carries
-   * side effects the legacy path performed once a turn — OpenCode backfills the
-   * session cost the vendor did not report on the wire — and with nothing
-   * reading it, those stopped happening too.
+   * Consumed once after received content has been presented, before the answer
+   * is persisted. Native message UUIDs and plan completion belong to the
+   * provider; neither can be inferred from Grimoire's display or result ids.
+   * The coordinator retains this reading across persistence retries.
    *
    * Absent for a surface with no runtime, like the encoder.
    */
@@ -91,6 +84,7 @@ export interface ChatTabExecutionOptions {
 export class ChatTabExecution {
   private readonly attachment: ChatProjectionAttachment;
   private bound: string | null = null;
+  private cancellationVersion = 0;
   private releasePresenter: (() => void) | null = null;
 
   constructor(private readonly options: ChatTabExecutionOptions) {
@@ -144,6 +138,8 @@ export class ChatTabExecution {
       readonly sessionBinding?: () => ChatSessionBinding | null;
     } = {},
   ): Promise<SubmittedChatTurn> {
+    const cancellationVersion = this.cancellationVersion;
+    const isCancelled = () => cancellationVersion !== this.cancellationVersion;
     const encoder = this.options.turnEncoder();
     if (!encoder) {
       // Refused rather than defaulted: without the provider's own encoding
@@ -153,7 +149,9 @@ export class ChatTabExecution {
       throw new Error('This tab has no provider runtime to encode a turn with.');
     }
     const conversationId = this.bound ?? await this.openCreated();
-    const submitted = await this.options.composition.submitTurn({
+    if (isCancelled()) throw new ChatTurnCancelledError();
+    return this.options.composition.submitTurn({
+      isCancelled,
       commandId: this.options.nextCommandId(),
       conversationId,
       backendId: this.options.backendId,
@@ -164,42 +162,13 @@ export class ChatTabExecution {
       ...(options.nativeSessionRef ? { nativeSessionRef: options.nativeSessionRef } : {}),
       ...(options.resumeCheckpoint ? { resumeCheckpoint: options.resumeCheckpoint } : {}),
       ...(options.sessionBinding ? { sessionBinding: options.sessionBinding } : {}),
+      turnMetadata: async () => {
+        // Provider content carries native message UUIDs. Finish presenting the
+        // received events before consuming those identities for persistence.
+        await this.attachment.settled();
+        return this.options.turnMetadata?.() ?? null;
+      },
     });
-    const completion = submitted.ticket.completion.then(completed => ({
-      ...completed,
-      ...this.providerReading(completed),
-    }));
-    // **Marked handled, because a caller may ignore it.** A turn whose
-    // coordinator is detached mid-flight rejects its completion, and deriving a
-    // second promise from it means a second rejection nobody is waiting on —
-    // which node reports as an unhandled rejection and, in a test process, ends
-    // the run. Awaiting this still throws; only the copy nobody took is quiet.
-    completion.catch(() => undefined);
-    return { ...submitted, ticket: { ...submitted.ticket, completion } };
-  }
-
-  /**
-   * The half of a finished turn only the provider knows.
-   *
-   * **Only the plan**, deliberately. The native identities are on the completion
-   * already, taken from what the kernel recorded, and letting a provider's
-   * copy overwrite them would put two answers to the same question back into
-   * the path the migration removed one from. Read here rather than by the
-   * surface because it is destructive — once per turn, at the moment the turn
-   * ends, which is the moment the legacy path read it too.
-   */
-  private providerReading(completed: CompletedChatTurn): { planCompleted?: true } {
-    if (completed.planCompleted === true) {
-      return {};
-    }
-    try {
-      return this.options.turnMetadata?.()?.planCompleted === true
-        ? { planCompleted: true }
-        : {};
-    } catch {
-      // A provider that cannot say is a turn with no plan, not a failed turn.
-      return {};
-    }
   }
 
   /**
@@ -266,6 +235,7 @@ export class ChatTabExecution {
   }
 
   async cancel(reason?: CancellationReason): Promise<void> {
+    this.cancellationVersion++;
     if (!this.bound) {
       return;
     }

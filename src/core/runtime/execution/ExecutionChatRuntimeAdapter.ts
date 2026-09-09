@@ -152,7 +152,6 @@ export class ExecutionRunStream {
   private cancelRequested = false;
   private metadataConsumed = false;
   private nativeRunRef: string | undefined;
-  private assistantMessageId: string | undefined;
   private planCompleted = false;
   private wake: (() => void) | null = null;
 
@@ -179,9 +178,6 @@ export class ExecutionRunStream {
       // Carried on every run-scoped envelope, so the identity survives even if
       // the turn ends on a path that emits nothing else.
       this.nativeRunRef = envelope.scope.nativeRunRef;
-    }
-    if (event.kind === 'result') {
-      this.assistantMessageId = event.result.resultId;
     }
     if (event.kind === 'interaction-resolved') {
       this.planCompleted = this.planCompleted || event.responseId.includes('plan');
@@ -294,7 +290,6 @@ export class ExecutionRunStream {
       // user one — so omitting them degrades rewind and resume silently, which
       // is worse than failing, because the turn still looks complete.
       ...(this.nativeRunRef ? { userMessageId: this.nativeRunRef } : {}),
-      ...(this.assistantMessageId ? { assistantMessageId: this.assistantMessageId } : {}),
       ...(this.planCompleted ? { planCompleted: true } : {}),
     };
   }
