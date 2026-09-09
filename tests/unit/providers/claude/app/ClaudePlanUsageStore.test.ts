@@ -223,4 +223,127 @@ describe('ClaudePlanUsageStore', () => {
       note: 'SDK token cost reported for completed turns.',
     });
   });
+
+  it('reads Claude quota percentages from unifiedWindows when the event omits utilization', () => {
+    jest.useFakeTimers().setSystemTime(new Date(2026, 5, 7, 13, 9).getTime());
+    try {
+      const store = new ClaudePlanUsageStore();
+      const fiveHourReset = new Date(2026, 5, 7, 17, 0);
+      const weeklyReset = new Date(2026, 5, 11, 3, 0);
+
+      const changed = store.recordSdkMessage({
+        type: 'rate_limit_event',
+        rate_limit_info: {
+          status: 'allowed',
+          rateLimitType: 'five_hour',
+          resetsAt: Math.floor(fiveHourReset.getTime() / 1000),
+          overageStatus: 'rejected',
+          overageDisabledReason: 'org_level_disabled',
+          isUsingOverage: false,
+          unifiedWindows: {
+            five_hour: {
+              utilization: 0.47,
+              resetsAt: Math.floor(fiveHourReset.getTime() / 1000),
+            },
+            seven_day: {
+              utilization: 0.31,
+              resetsAt: Math.floor(weeklyReset.getTime() / 1000),
+            },
+          },
+        },
+      });
+
+      expect(changed).toBe(true);
+      expect(store.getCachedUsage({
+        plugin: {} as any,
+        providerId: 'claude',
+        settings: {},
+      })).toEqual({
+        plan: 'Claude Code',
+        windows: [
+          {
+            label: '5-hr',
+            pct: 47,
+            reset: new Intl.DateTimeFormat(undefined, {
+              hour: 'numeric',
+              minute: '2-digit',
+            }).format(fiveHourReset),
+          },
+          {
+            label: 'Weekly',
+            pct: 31,
+            reset: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(weeklyReset),
+          },
+        ],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps event-level Claude windows that unifiedWindows does not report', () => {
+    const store = new ClaudePlanUsageStore();
+
+    store.recordSdkMessage({
+      type: 'rate_limit_event',
+      rate_limit_info: {
+        status: 'allowed',
+        rateLimitType: 'five_hour',
+        resetsAt: '5:00 PM',
+        unifiedWindows: {
+          five_hour: { utilization: 0.09, resetsAt: '5:00 PM' },
+        },
+      },
+    });
+    store.recordSdkMessage({
+      type: 'rate_limit_event',
+      rate_limit_info: {
+        status: 'allowed',
+        rateLimitType: 'seven_day_opus',
+        resetsAt: 'Mon',
+        utilization: 71,
+      },
+    });
+
+    expect(store.getCachedUsage({
+      plugin: {} as any,
+      providerId: 'claude',
+      settings: {},
+    })).toEqual({
+      plan: 'Claude Code',
+      windows: [
+        { label: '5-hr', pct: 9, reset: '5:00 PM' },
+        { label: 'Weekly Opus', pct: 71, reset: 'Mon' },
+      ],
+    });
+  });
+
+  it('falls back to the event window when unifiedWindows is unusable', () => {
+    const store = new ClaudePlanUsageStore();
+
+    const changed = store.recordSdkMessage({
+      type: 'rate_limit_event',
+      rate_limit_info: {
+        status: 'allowed',
+        rateLimitType: 'five_hour',
+        resetsAt: '5:50 PM',
+        unifiedWindows: {
+          five_hour: 'not-a-window',
+          seven_day: { utilization: 0.5 },
+        },
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(store.getCachedUsage({
+      plugin: {} as any,
+      providerId: 'claude',
+      settings: {},
+    })).toEqual({
+      plan: 'Claude Code',
+      windows: [
+        { label: '5-hr', pct: 0, pctKnown: false, reset: '5:50 PM' },
+      ],
+    });
+  });
 });

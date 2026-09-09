@@ -14,6 +14,18 @@ import { loadClaudeStatusLineUsageSnapshot } from './ClaudeStatusLineUsageSnapsh
 
 type ClaudeRateLimitType = 'five_hour' | 'seven_day' | 'seven_day_opus' | 'seven_day_sonnet' | 'overage';
 
+interface ClaudeRateLimitWindowEntry {
+  key: string;
+  window: ProviderPlanUsageWindow;
+}
+
+/**
+ * Windows resolved from `rate_limit_info.unifiedWindows`. The SDK also reports
+ * `seven_day_overage_included` there, which carries separate product meaning and
+ * stays out until the readout defines how to present it.
+ */
+const UNIFIED_RATE_LIMIT_KEYS: readonly ClaudeRateLimitType[] = ['five_hour', 'seven_day'];
+
 export class ClaudePlanUsageStore extends ProviderSpendUsageStore {
   private windows = new Map<string, ProviderPlanUsageWindow>();
 
@@ -26,12 +38,24 @@ export class ClaudePlanUsageStore extends ProviderSpendUsageStore {
   }
 
   recordSdkMessage(message: SDKMessage | Record<string, unknown>): boolean {
-    const rateLimitWindow = parseClaudeRateLimitWindow(message);
-    if (rateLimitWindow) {
-      const current = this.windows.get(rateLimitWindow.key);
-      const changed = JSON.stringify(current) !== JSON.stringify(rateLimitWindow.window);
-      this.windows.set(rateLimitWindow.key, rateLimitWindow.window);
-      return changed;
+    const rateLimitWindows = parseUnifiedRateLimitWindows(message);
+    const eventWindow = parseClaudeRateLimitWindow(message);
+    // The event-level window is frequently reset-only, so it must not replace a
+    // key already resolved from `unifiedWindows`, which reports the percentage.
+    if (eventWindow && !rateLimitWindows.some(entry => entry.key === eventWindow.key)) {
+      rateLimitWindows.push(eventWindow);
+    }
+
+    if (rateLimitWindows.length > 0) {
+      let quotaChanged = false;
+      for (const { key, window } of rateLimitWindows) {
+        const current = this.windows.get(key);
+        if (JSON.stringify(current) !== JSON.stringify(window)) {
+          quotaChanged = true;
+        }
+        this.windows.set(key, window);
+      }
+      return quotaChanged;
     }
 
     if (!isRecord(message) || message.type !== 'result' || !isRecord(message.modelUsage)) {
@@ -87,7 +111,7 @@ export class ClaudePlanUsageStore extends ProviderSpendUsageStore {
 
 export const claudePlanUsageStore = new ClaudePlanUsageStore();
 
-function parseClaudeRateLimitWindow(message: SDKMessage | Record<string, unknown>): { key: string; window: ProviderPlanUsageWindow } | null {
+function parseClaudeRateLimitWindow(message: SDKMessage | Record<string, unknown>): ClaudeRateLimitWindowEntry | null {
   if (!isRecord(message) || message.type !== 'rate_limit_event' || !isRecord(message.rate_limit_info)) {
     return null;
   }
@@ -114,6 +138,48 @@ function parseClaudeRateLimitWindow(message: SDKMessage | Record<string, unknown
       reset,
     },
   };
+}
+
+/**
+ * Recent Claude CLI builds report the consumed percentage per window in
+ * `rate_limit_info.unifiedWindows` and leave the top-level `utilization`
+ * undefined on most events. Reading only the top-level field leaves the window
+ * at `pctKnown: false`, which renders as an em dash and, while it is the only
+ * known window, suppresses the quota readout entirely.
+ *
+ * The field is absent from the published SDK types, so it is read defensively:
+ * anything unexpected falls back to the event-level window parsed above.
+ */
+function parseUnifiedRateLimitWindows(
+  message: SDKMessage | Record<string, unknown>,
+): ClaudeRateLimitWindowEntry[] {
+  if (!isRecord(message) || message.type !== 'rate_limit_event' || !isRecord(message.rate_limit_info)) {
+    return [];
+  }
+
+  const unifiedWindows = message.rate_limit_info.unifiedWindows;
+  if (!isRecord(unifiedWindows)) {
+    return [];
+  }
+
+  const entries: ClaudeRateLimitWindowEntry[] = [];
+  for (const key of UNIFIED_RATE_LIMIT_KEYS) {
+    const unifiedWindow = unifiedWindows[key];
+    if (!isRecord(unifiedWindow)) {
+      continue;
+    }
+
+    const pct = readUtilizationPct(unifiedWindow);
+    const reset = formatResetValue(unifiedWindow.resetsAt);
+    const label = formatRateLimitLabel(key);
+    if (pct === null || !reset || !label) {
+      continue;
+    }
+
+    entries.push({ key, window: { label, pct, reset } });
+  }
+
+  return entries;
 }
 
 function readRateLimitType(value: unknown): ClaudeRateLimitType | null {
