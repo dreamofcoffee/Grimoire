@@ -16,8 +16,20 @@ import type { AcpSessionNotification, AcpUsage } from '../../acp';
  * reports none. `size: 0` is read by `ReasonixContentPresenter` as "no window
  * was stated" rather than as a window of nothing, which keeps
  * `contextWindowIsAuthoritative` false and the badge honest about what it knows.
+ *
+ * **The cost rides on the completion status and no other.** `usage.turn` is a
+ * running figure for the turn in progress, re-sent whole on every status —
+ * `event: "usage"` and `event: "completion"` both carried `totalTokens: 5999`
+ * for one turn in the recording, and a nine-status turn would carry it nine
+ * times. The spend store adds what it is given, so forwarding every status
+ * would multiply one turn's charge by however many times the agent reported it.
+ * Tokens are a replacement and may arrive at any status; a charge is an
+ * addition and arrives once.
  */
 export const REASONIX_STATUS_UPDATE_METHOD = '_reasonix.io/session/status_update';
+
+/** The one status event that means the turn is over and its cost is final. */
+const REASONIX_COMPLETION_EVENT = 'completion';
 
 export const REASONIX_SESSION_NOTIFICATION_METHODS = [
   REASONIX_STATUS_UPDATE_METHOD,
@@ -50,7 +62,7 @@ export function parseReasonixSessionNotification(
       // No window is stated anywhere in the status, so none is claimed here.
       size: 0,
       used: turn.totalTokens,
-      cost: readCost(usage?.turn),
+      cost: params.event === REASONIX_COMPLETION_EVENT ? readCost(usage?.turn) : null,
       _meta: { [REASONIX_TURN_USAGE_META_KEY]: turn },
     } as AcpSessionNotification['update'],
   };
@@ -83,6 +95,8 @@ function readUsage(value: unknown): AcpUsage | null {
  * Both fields are null on a provider with no price table — the recorded
  * session says so as `costQuote.incompleteReason: "no_price"` — so an unpriced
  * turn contributes nothing to the spend indicator rather than a zero.
+ *
+ * Only ever read for a completion status; see the note above on why.
  */
 function readCost(value: unknown): { amount: number; currency: string } | null {
   if (!isRecord(value)) {

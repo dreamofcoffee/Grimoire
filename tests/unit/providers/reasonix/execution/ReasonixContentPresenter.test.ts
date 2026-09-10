@@ -86,7 +86,7 @@ describe('Reasonix content presenter', () => {
       title: 'Ran echo',
       kind: 'execute',
       rawInput: { command: 'echo grimoire-probe' },
-      _meta: { 'cognition.ai/inferenceToolName': 'exec' },
+      _meta: { 'reasonix.io': { tool: 'bash', subject: 'ls -a' } },
     } as unknown as AcpSessionUpdate));
 
     expect(chunks).toContainEqual(expect.objectContaining({
@@ -202,6 +202,7 @@ describe('Reasonix content presenter', () => {
     const { presenter, recorded } = createPresenter();
     const notification = parseReasonixSessionNotification(REASONIX_STATUS_UPDATE_METHOD, {
       sessionId: 'acp-session-1',
+      event: 'usage',
       status: {
         usage: {
           turn: {
@@ -239,6 +240,7 @@ describe('Reasonix content presenter', () => {
     // and a badge built from it would erase what the last turn spent.
     expect(parseReasonixSessionNotification(REASONIX_STATUS_UPDATE_METHOD, {
       sessionId: 'acp-session-1',
+      event: 'usage',
       status: { usage: { turn: { totalTokens: 0, promptTokens: 0, completionTokens: 0 } } },
     })).toBeNull();
   });
@@ -248,12 +250,55 @@ describe('Reasonix content presenter', () => {
     // `no_price`, and both `estimatedCost` and `currency` are null.
     const priced = parseReasonixSessionNotification(REASONIX_STATUS_UPDATE_METHOD, {
       sessionId: 'acp-session-1',
+      event: 'completion',
       status: { usage: { turn: { totalTokens: 10, estimatedCost: 0.25, currency: 'USD' } } },
     });
 
     expect(priced?.update).toEqual(expect.objectContaining({
       cost: { amount: 0.25, currency: 'USD' },
     }));
+  });
+
+  it('charges one turn once, however many times the status reports it', () => {
+    // `usage.turn` is a running figure re-sent whole on every status, and the
+    // spend store adds what it is given. Forwarding a cost before the turn ends
+    // would multiply one charge by the number of statuses the turn produced.
+    const status = (event: string) => parseReasonixSessionNotification(
+      REASONIX_STATUS_UPDATE_METHOD,
+      {
+        sessionId: 'acp-session-1',
+        event,
+        status: { usage: { turn: { totalTokens: 10, estimatedCost: 0.25, currency: 'USD' } } },
+      },
+    );
+
+    expect(status('phase')?.update).toEqual(expect.objectContaining({ cost: null }));
+    expect(status('usage')?.update).toEqual(expect.objectContaining({ cost: null }));
+    expect(status('completion')?.update).toEqual(expect.objectContaining({
+      cost: { amount: 0.25, currency: 'USD' },
+    }));
+  });
+
+  it('keeps the turn tokens the status gave when the prompt result carries none', () => {
+    // Reasonix answers `session/prompt` with `{stopReason, transcriptPath}`.
+    // Clearing on that answer would drop the counts at the end of every turn.
+    const { presenter } = createPresenter();
+    const notification = parseReasonixSessionNotification(REASONIX_STATUS_UPDATE_METHOD, {
+      sessionId: 'acp-session-1',
+      event: 'completion',
+      status: { usage: { turn: { totalTokens: 5_999, promptTokens: 5_996 } } },
+    });
+    presenter.present({ kind: 'session-update', notification });
+
+    const chunks = presenter.present({
+      kind: 'prompt-result',
+      response: { stopReason: 'end_turn' },
+    });
+
+    expect(chunks).toEqual([expect.objectContaining({
+      type: 'usage',
+      usage: expect.objectContaining({ contextTokens: 5_999, inputTokens: 5_996 }),
+    })]);
   });
 
   it('forgets the session a new conversation must not report as its own', () => {

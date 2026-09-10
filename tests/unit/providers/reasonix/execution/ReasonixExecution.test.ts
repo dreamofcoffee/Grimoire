@@ -28,7 +28,7 @@ describe('Reasonix dynamic configuration', () => {
     return { client, calls };
   }
 
-  it('sets the model, then the mode, then the approval posture', async () => {
+  it('sets the model, then the approval posture, then the mode', async () => {
     const { client, calls } = createClient();
     const applier = new ReasonixAcpDynamicConfigApplier({
       resolve: async () => ({ modelId: 'custom-api-z-ai/glm-5.3', modeId: 'plan' }),
@@ -61,11 +61,11 @@ describe('Reasonix dynamic configuration', () => {
       signal: new AbortController().signal,
     });
 
-    expect(calls).toEqual(['set-mode:normal', 'set-config:tool_approval:yolo']);
+    expect(calls).toEqual(['set-config:tool_approval:yolo', 'set-mode:normal']);
   });
 
   it('runs the turn even when the agent will not take the mode', async () => {
-    const refused: string[] = [];
+    const refused: Array<{ method: string; modeId: string }> = [];
     const client = {
       setConfigOption: async () => ({ configOptions: [] }),
       setMode: async () => {
@@ -80,7 +80,7 @@ describe('Reasonix dynamic configuration', () => {
     const presented: unknown[] = [];
     const applier = new ReasonixAcpDynamicConfigApplier(
       { resolve: async () => ({ modeId: 'plan' }) },
-      ({ modeId }) => refused.push(modeId),
+      ({ method, modeId }) => refused.push({ method, modeId }),
     );
 
     await expect(applier.apply({
@@ -91,12 +91,48 @@ describe('Reasonix dynamic configuration', () => {
       presentContent: payload => presented.push(payload),
     })).resolves.toBeUndefined();
 
-    expect(refused).toEqual(['plan']);
+    expect(refused).toEqual([{ method: 'session/set_mode', modeId: 'plan' }]);
     expect(presented).toEqual([{
       kind: 'mode-refused',
       modeId: 'plan',
       detail: 'Mode plan is not available for this session.',
     }]);
+  });
+
+  it('never moves the mode when the approval posture would not move', async () => {
+    // The half-succeed that must not happen. Leaving Auto-approve for Safe, a
+    // mode that landed and a posture that did not would run the turn on `yolo`
+    // behind a toolbar reading Safe, and the once-per-session notice would then
+    // stay quiet about it for every later turn.
+    const calls: string[] = [];
+    const client = {
+      setConfigOption: async ({ configId }: { configId: string }) => {
+        calls.push(`set-config:${configId}`);
+        if (configId === 'tool_approval') {
+          throw new JsonRpcErrorResponse('session/set_config_option', -32602, 'Invalid params');
+        }
+        return { configOptions: [] };
+      },
+      setMode: async ({ modeId }: { modeId: string }) => {
+        calls.push(`set-mode:${modeId}`);
+        return {};
+      },
+    } as unknown as ManagedAcpClient;
+    const refused: Array<{ method: string; modeId: string }> = [];
+    const applier = new ReasonixAcpDynamicConfigApplier(
+      { resolve: async () => ({ modeId: 'normal' }) },
+      ({ method, modeId }) => refused.push({ method, modeId }),
+    );
+
+    await applier.apply({
+      client,
+      sessionId: 'native-session',
+      dynamicRef: 'opaque-config',
+      signal: new AbortController().signal,
+    });
+
+    expect(calls).toEqual(['set-config:tool_approval']);
+    expect(refused).toEqual([{ method: 'session/set_config_option', modeId: 'normal' }]);
   });
 
   it('tells a person once per session, not once per turn', async () => {
@@ -120,6 +156,31 @@ describe('Reasonix dynamic configuration', () => {
     await apply();
 
     expect(presented).toHaveLength(1);
+  });
+
+  it('names the mode in the toolbar vocabulary, not the agent shared id', async () => {
+    // Safe and Auto-approve are both `normal` on the wire. A notice built from
+    // the wire value would tell somebody who asked for Auto-approve that Safe
+    // was refused.
+    const presented: unknown[] = [];
+    const client = {
+      setConfigOption: async () => {
+        throw new JsonRpcErrorResponse('session/set_config_option', -32602, 'Invalid params');
+      },
+    } as unknown as ManagedAcpClient;
+    const applier = new ReasonixAcpDynamicConfigApplier({
+      resolve: async () => ({ modeId: 'full_access' }),
+    });
+
+    await applier.apply({
+      client,
+      sessionId: 'native-session',
+      dynamicRef: 'opaque-config',
+      signal: new AbortController().signal,
+      presentContent: payload => presented.push(payload),
+    });
+
+    expect(presented).toEqual([expect.objectContaining({ modeId: 'full_access' })]);
   });
 
   it('reads the reason out of the shape the refusal answers with', async () => {

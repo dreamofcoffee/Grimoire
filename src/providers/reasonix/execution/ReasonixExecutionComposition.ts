@@ -160,12 +160,14 @@ export class ReasonixExecution {
       requestResolver: this.requests,
       dynamicApplier: new ReasonixAcpDynamicConfigApplier(
         { resolve: dynamicRef => this.requests.resolveDynamic(dynamicRef) },
-        ({ modeId, error }) => this.plugin.recordDebugLog({
+        ({ method, modeId, error }) => this.plugin.recordDebugLog({
           error,
           event: 'execution.setMode.refused',
           level: 'warn',
           scope: 'reasonix',
-          data: { modeId },
+          // Both, because one Grimoire mode is two calls: the mode says what
+          // the person asked for and the method says which half refused it.
+          data: { method, modeId },
         }),
       ),
       interactionBridge: this.interactions,

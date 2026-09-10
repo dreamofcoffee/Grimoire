@@ -216,11 +216,14 @@ describe('Reasonix execution composition', () => {
           loadSession: async request => {
             loadRequests.push(request);
             if (options.sessionIsGone) {
-              // Recorded: `-32016 Session not found`, with the kind in `data`.
-              throw new JsonRpcErrorResponse('session/load', -32016, 'Session not found', {
-                'cognition.ai/errorKind': 'session_not_found',
-                'cognition.ai/retryable': false,
-              });
+              // Probed 2026-09-09: the id is named in the message and there
+              // is no `data` to key on.
+              throw new JsonRpcErrorResponse(
+                'session/load',
+                -32602,
+                `session/load: unknown session ${request.sessionId}`,
+                {},
+              );
             }
             if (options.sessionLoadRefusal) {
               throw new JsonRpcErrorResponse('session/load', -32000, options.sessionLoadRefusal);
@@ -707,8 +710,9 @@ describe('Reasonix execution composition', () => {
   });
 
   it('replaces a session the agent says it no longer has, and says so', async () => {
-    // Recorded: `-32016 Session not found`. The shared pattern reads the
-    // message, the backend replaces the session, and the surface can say so.
+    // Probed: `-32602 "session/load: unknown session <id>"`. The shared
+    // pattern reads the message, the backend replaces the session, and the
+    // surface can say so.
     const { execution, host } = await createHarness({ sessionIsGone: true });
     const runtime = execution.createRuntime();
     runtime.syncConversationState({
@@ -850,8 +854,8 @@ describe('Reasonix execution composition', () => {
     // `session/new` reports where the agent starts, not a switch.
     expect(synced).toEqual([]);
     expect(getReasonixProviderSettings(plugin.settings).selectedMode).toBe('plan');
-    expect(modeCalls(configOptions)).toEqual(['plan']);
     expect(approvalCalls(configOptions)).toEqual(['ask']);
+    expect(modeCalls(configOptions)).toEqual(['plan']);
     execution.dispose();
     await host.dispose();
   });
@@ -919,19 +923,23 @@ describe('Reasonix execution composition', () => {
 
     const chunks = await drain(runtime.query(runtime.prepareTurn({ text: 'what now?' })));
 
+    // The posture landed and the mode did not, which is the half-failure the
+    // ordering makes safe: the session keeps the mode it had.
+    expect(approvalCalls(configOptions)).toEqual(['yolo']);
     expect(modeCalls(configOptions)).toEqual(['normal']);
     expect(chunks.filter(chunk => chunk.type === 'error')).toEqual([]);
     expect(chunks.some(chunk => chunk.type === 'text' && chunk.content.includes('the answer')))
       .toBe(true);
     expect(logged).toContainEqual(expect.objectContaining({
       event: 'execution.setMode.refused',
-      data: { modeId: 'normal' },
+      data: { method: 'session/set_mode', modeId: 'full_access' },
     }));
-    // The mode a refusal names is Reasonix's, and Safe is what `normal` is.
+    // Named in the toolbar's vocabulary: `normal` is the wire value for both
+    // Safe and Auto-approve, and this person asked for the second.
     expect(chunks.filter(chunk => chunk.type === 'notice')).toEqual([{
       type: 'notice',
       level: 'warning',
-      content: 'Reasonix did not switch to Safe: Mode plan is not available for this '
+      content: 'Reasonix did not switch to Auto-approve: Mode plan is not available for this '
         + 'session. This turn ran in the mode the session was already in.',
     }]);
 
@@ -994,8 +1002,8 @@ describe('Reasonix execution composition', () => {
     // the session stays in `normal` and `tool_approval` carries the rest. A
     // vault that has never opened a session knows no model to ask for.
     expect(configOptions).toEqual([
-      { configId: 'mode', sessionId: 'acp-session-1', value: 'normal' },
       { configId: 'tool_approval', sessionId: 'acp-session-1', value: 'yolo' },
+      { configId: 'mode', sessionId: 'acp-session-1', value: 'normal' },
     ]);
     execution.dispose();
     await host.dispose();

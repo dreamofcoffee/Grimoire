@@ -201,7 +201,7 @@ export const reasonixSettingsTabRenderer: ProviderSettingsTabRenderer = {
       heading: t('settings.providerTabs.reasonix.environment.heading'),
       name: t('settings.providerTabs.reasonix.environment.name'),
       desc: t('settings.providerTabs.reasonix.environment.desc'),
-      placeholder: 'REASONIX_MODEL=opus\nRUST_LOG=warn',
+      placeholder: 'REASONIX_HOME=~/.reasonix\nDEEPSEEK_API_KEY=…',
       renderCustomContextLimits: (target) => context.renderCustomContextLimits(target, 'reasonix'),
     });
   },

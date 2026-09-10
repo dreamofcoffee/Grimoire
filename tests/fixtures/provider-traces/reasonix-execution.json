@@ -54,8 +54,8 @@
     ],
     "dynamicConfiguration": [
       "set-config:model:custom-api-z-ai/glm-5.3",
-      "set-mode:plan",
-      "set-config:tool_approval:ask"
+      "set-config:tool_approval:ask",
+      "set-mode:plan"
     ],
     "approval": [
       "interaction-opened:approval",

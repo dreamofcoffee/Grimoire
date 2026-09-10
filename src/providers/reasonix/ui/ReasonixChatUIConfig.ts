@@ -25,13 +25,27 @@ const REASONIX_MODELS: ProviderUIOption[] = [
     value: REASONIX_SYNTHETIC_MODEL_ID,
   },
 ];
-/** What the recorded session reports as `size`; the wire overrides it per turn. */
+/**
+ * The window every Reasonix session is measured against, because the wire never
+ * states one.
+ *
+ * Devin's comment here said the wire overrides it per turn; that is not true of
+ * this provider. Reasonix sends no `usage_update`, and the status notification
+ * it sends instead carries no window size, so `contextWindowIsAuthoritative`
+ * stays false and this figure is what the percentage is drawn from. It is a
+ * default rather than a fact: the window really belongs to whichever model the
+ * configured provider block serves, and a person whose model differs sets it in
+ * the settings tab's custom context limits.
+ */
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 /**
  * One option, because the capability says `reasoningControl: 'none'` and the
- * contribution builds no reasoning group from it. Reasonix's effort lives in the
- * model id — `claude-opus-5-high` is a model, not a level — so the picker is
- * the model picker.
+ * contribution builds no reasoning group from it.
+ *
+ * Not because Reasonix has no effort control — it has an `effort` config option
+ * — but because that option is `auto`, `enabled`, `disabled`, a switch for
+ * whether to think rather than the tiered budget `reasoningControl` models.
+ * Driving it is a separate piece of work; `ReasonixProviderModule` says so.
  */
 const REASONIX_DEFAULT_REASONING = 'default';
 const REASONIX_REASONING_OPTIONS: ProviderReasoningOption[] = [

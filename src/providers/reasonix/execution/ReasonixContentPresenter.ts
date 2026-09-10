@@ -16,7 +16,6 @@ import type {
   AcpUsage,
   AcpUsageUpdate,
 } from '@/providers/acp/types';
-import { mapReasonixModeToGrimoire } from '@/providers/reasonix/modes';
 import { REASONIX_TURN_USAGE_META_KEY } from '@/providers/reasonix/runtime/ReasonixSessionNotifications';
 
 /** What the ACP connection delivered, shared with every managed-ACP provider. */
@@ -212,7 +211,14 @@ export class ReasonixContentPresenter {
     return [];
   }
 
-  /** The answer to `session/prompt`, which is where the turn's own tokens are. */
+  /**
+   * The answer to `session/prompt`, which for Reasonix carries no tokens.
+   *
+   * The recorded reply is `{stopReason, transcriptPath}` and nothing else, so
+   * this only takes a usage it was actually given. Assigning `?? null` the way
+   * Devin's presenter does would clear, at end of turn, the counts the status
+   * notification had just supplied.
+   */
   private presentPromptResult(response: AcpPromptResponse | undefined): readonly StreamChunk[] {
     if (!response) {
       return [];
@@ -221,7 +227,9 @@ export class ReasonixContentPresenter {
     if (userMessageId) {
       this.metadata = { ...this.metadata, userMessageId };
     }
-    this.promptUsage = response.usage ?? null;
+    if (response.usage) {
+      this.promptUsage = response.usage;
+    }
     return this.usageChunks();
   }
 
@@ -251,9 +259,16 @@ function readTurnUsage(notification: AcpSessionNotification): AcpUsage | null {
     : null;
 }
 
-/** What a person is told when the session would not take the mode they picked. */
+/**
+ * What a person is told when the session would not take the mode they picked.
+ *
+ * The id here is Grimoire's, not the agent's: one Grimoire mode is two calls to
+ * Reasonix and `normal` is the session mode for both Safe and Auto-approve, so
+ * naming the wire value would tell somebody who asked for Auto-approve that
+ * Safe was refused.
+ */
 function presentRefusedMode(modeId: string, detail?: string): StreamChunk {
-  const asked = PERMISSION_LABELS[mapReasonixModeToGrimoire(modeId)];
+  const asked = PERMISSION_LABELS[modeId] ?? modeId;
   return {
     type: 'notice',
     level: 'warning',
@@ -264,14 +279,9 @@ function presentRefusedMode(modeId: string, detail?: string): StreamChunk {
   };
 }
 
-/**
- * The toolbar's own words, for the two positions a reported mode can name.
- *
- * Auto-approve is absent because no Reasonix mode is Auto-approve: it is a
- * `tool_approval` value, and `modes.ts` says why a reported mode must never
- * move a person out of it.
- */
-const PERMISSION_LABELS: Readonly<Record<'normal' | 'plan', string>> = {
+/** The toolbar's own words for its three positions. */
+const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   normal: 'Safe',
+  full_access: 'Auto-approve',
   plan: 'Plan',
 };

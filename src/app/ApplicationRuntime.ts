@@ -195,10 +195,10 @@ export class ApplicationRuntime {
     this.reasonix = new ReasonixExecution(plugin, registry);
     this.kernel.registerBackend(this.reasonix.createBackendRegistration());
 
-    // **Absent means unsupported**, and four providers are absent: Antigravity
-    // runs in print mode, and Gemini, Qwen and Devin have never had auxiliary
-    // execution. They shipped three no-op services each instead of saying so,
-    // which is a failure the UI could not tell from a real one.
+    // **Absent means unsupported**, and five providers are absent: Antigravity
+    // runs in print mode, and Gemini, Qwen, Devin and Reasonix have never had
+    // auxiliary execution. They shipped three no-op services each instead of
+    // saying so, which is a failure the UI could not tell from a real one.
     this.auxiliary = new AuxiliaryExecutionOwner({
       resolveTitleProviderId: () => options.resolveTitleProviderId(),
       sources: new Map([
