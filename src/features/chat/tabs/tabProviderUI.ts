@@ -56,6 +56,7 @@ export function summarizeUsageWindow(window: ProviderUsageWindow): Record<string
     pct: window.pct,
     ...(window.pctKnown === false ? { pctKnown: false } : {}),
     reset: window.reset,
+    ...(window.resetAt !== undefined ? { resetAt: window.resetAt } : {}),
   };
 }
 

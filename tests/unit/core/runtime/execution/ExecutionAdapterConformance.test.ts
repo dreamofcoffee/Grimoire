@@ -1061,7 +1061,9 @@ describe('the assembled ChatRuntime adapter', () => {
         delay: immediately,
       },
       antigravityProviderModule.runtimePorts({
+        cachedPlanUsage: () => null,
         listModels: async () => [],
+        refreshPlanUsage: async () => null,
         refreshModels: async () => [],
         renderSettingsTab: () => undefined,
       }),
@@ -1408,7 +1410,9 @@ describe('concurrent readiness', () => {
         delay: immediately,
       },
       antigravityProviderModule.runtimePorts({
+        cachedPlanUsage: () => null,
         listModels: async () => [],
+        refreshPlanUsage: async () => null,
         refreshModels: async () => [],
         renderSettingsTab: () => undefined,
       }),

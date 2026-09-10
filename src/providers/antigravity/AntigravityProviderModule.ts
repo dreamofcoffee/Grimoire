@@ -5,6 +5,7 @@ import type {
   ProviderModelRefreshOptions,
   ProviderModule,
   ProviderSettingsCodec,
+  ProviderUsageSnapshot,
   ProviderWorkspaceSlots,
 } from '@/core/providers/ProviderModule';
 
@@ -81,7 +82,9 @@ const KNOWN_SETTINGS_FIELDS = new Set([
 ]);
 
 export interface AntigravityWorkspaceContext {
+  cachedPlanUsage(): ProviderUsageSnapshot | null;
   listModels(): Promise<readonly ProviderModelDescriptor[]>;
+  refreshPlanUsage(): Promise<ProviderUsageSnapshot | null>;
   refreshModels(
     options?: ProviderModelRefreshOptions,
   ): Promise<readonly ProviderModelDescriptor[]>;
@@ -259,6 +262,10 @@ AntigravityProviderSettings
         models: {
           list: () => context.listModels(),
           refresh: options => context.refreshModels(options),
+        },
+        usage: {
+          cached: () => context.cachedPlanUsage(),
+          refresh: () => context.refreshPlanUsage(),
         },
         settingsPresentation: { render: host => context.renderSettingsTab(host) },
       };

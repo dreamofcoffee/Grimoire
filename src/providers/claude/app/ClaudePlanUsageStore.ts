@@ -3,6 +3,7 @@ import type { SDKMessage } from '@anthropic-ai/claude-agent-sdk';
 import type {
   ProviderPlanUsageWindow,
 } from '../../../core/providers/types';
+import { formatPlanResetLabel, resolvePlanResetDate } from '../../../providers/shared/planUsageReset';
 import type {
   ProviderPlanUsage,
   ProviderPlanUsageContext,
@@ -132,11 +133,14 @@ function parseEventRateLimitWindow(info: Record<string, unknown>): ClaudeRateLim
   }
 
   const pct = readUtilizationPct(info);
-  const reset = readReset(info, rateLimitType);
+  const resetValue = readResetValue(info, rateLimitType);
+  const reset = formatPlanResetLabel(resetValue);
   const label = formatRateLimitLabel(rateLimitType);
   if (!reset || !label) {
     return null;
   }
+
+  const resetAt = resolvePlanResetDate(resetValue);
 
   return {
     key: rateLimitType,
@@ -145,6 +149,7 @@ function parseEventRateLimitWindow(info: Record<string, unknown>): ClaudeRateLim
       pct: pct ?? 0,
       ...(pct === null ? { pctKnown: false } : {}),
       reset,
+      ...(resetAt ? { resetAt: resetAt.getTime() } : {}),
     },
   };
 }
@@ -173,13 +178,18 @@ function parseUnifiedRateLimitWindows(info: Record<string, unknown>): ClaudeRate
     }
 
     const pct = readUtilizationPct(unifiedWindow);
-    const reset = formatResetValue(unifiedWindow.resetsAt);
+    const reset = formatPlanResetLabel(unifiedWindow.resetsAt);
     const label = formatRateLimitLabel(key);
     if (pct === null || !reset || !label) {
       continue;
     }
 
-    entries.push({ key, window: { label, pct, reset } });
+    const resetAt = resolvePlanResetDate(unifiedWindow.resetsAt);
+
+    entries.push({
+      key,
+      window: { label, pct, reset, ...(resetAt ? { resetAt: resetAt.getTime() } : {}) },
+    });
   }
 
   return entries;
@@ -205,11 +215,10 @@ function readUtilizationPct(info: Record<string, unknown>): number | null {
   return info.status === 'rejected' ? 100 : null;
 }
 
-function readReset(info: Record<string, unknown>, rateLimitType: ClaudeRateLimitType): string | null {
-  const value = rateLimitType === 'overage'
+function readResetValue(info: Record<string, unknown>, rateLimitType: ClaudeRateLimitType): unknown {
+  return rateLimitType === 'overage'
     ? info.overageResetsAt ?? info.resetsAt
     : info.resetsAt;
-  return formatResetValue(value);
 }
 
 function formatRateLimitLabel(rateLimitType: ClaudeRateLimitType): string | null {
@@ -231,35 +240,6 @@ function formatRateLimitLabel(rateLimitType: ClaudeRateLimitType): string | null
   return null;
 }
 
-function formatResetValue(value: unknown): string | null {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed || null;
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    const milliseconds = value > 10_000_000_000 ? value : value * 1000;
-    return formatResetDate(new Date(milliseconds));
-  }
-
-  return null;
-}
-
-function formatResetDate(date: Date): string {
-  const now = new Date();
-  if (
-    date.getFullYear() === now.getFullYear()
-    && date.getMonth() === now.getMonth()
-    && date.getDate() === now.getDate()
-  ) {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
-}
 
 function clampPct(pct: number): number {
   if (!Number.isFinite(pct)) {

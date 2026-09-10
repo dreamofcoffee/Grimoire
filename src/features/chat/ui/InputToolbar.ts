@@ -2,6 +2,7 @@ import { Notice, setIcon, setTooltip } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
+import { formatPlanResetInstant } from '@/providers/shared/planUsageReset';
 import { asActivatable, markDecorative } from '@/shared/components/activatable';
 
 import type { ProjectWorkspace } from '../../../core/context/types';
@@ -150,6 +151,7 @@ function formatModelButtonLabel(label: string): string {
 }
 
 const PLAN_USAGE_WARN_THRESHOLD = 80;
+const PLAN_USAGE_TOOLTIP_CLASS = 'grimoire-plan-usage-tooltip';
 const FIVE_HOUR_WINDOW_PATTERN = /5\s*-?\s*h/i;
 const WEEKLY_WINDOW_PATTERN = /week/i;
 
@@ -174,6 +176,7 @@ function normalizeUsageWindow(window: ProviderUsageWindow): ProviderUsageWindow 
     pct: clampUsagePct(window.pct),
     ...(window.pctKnown === false ? { pctKnown: false } : {}),
     reset: window.reset,
+    ...(window.resetAt !== undefined ? { resetAt: window.resetAt } : {}),
   };
 }
 
@@ -226,11 +229,19 @@ function formatQuotaBadgeLabel(label: string): string {
 }
 
 function formatQuotaLimitDescription(window: ProviderUsageWindow): string {
-  if (FIVE_HOUR_WINDOW_PATTERN.test(window.label)) {
+  const label = formatQuotaTooltipWindowLabel(window);
+  if (label === t('chat.ui.usage.fiveHourWindow')) {
     return t('chat.ui.usage.fiveHourLimit');
   }
 
-  return t('chat.ui.usage.namedLimit', { name: window.label });
+  return t('chat.ui.usage.namedLimit', { name: label });
+}
+
+function formatQuotaTooltipWindowLabel(window: ProviderUsageWindow): string {
+  return window.label.replace(
+    /\b5\s*-?\s*h(?:ours?|rs?)?\b/i,
+    t('chat.ui.usage.fiveHourWindow'),
+  );
 }
 
 function stripThisMonth(spend: string): string {
@@ -249,19 +260,87 @@ function isUsageWindowHot(window: ProviderUsageWindow): boolean {
   return isUsagePctKnown(window) && window.pct >= PLAN_USAGE_WARN_THRESHOLD;
 }
 
-function formatQuotaAriaLabel(plan: string, window: ProviderUsageWindow): string {
+/**
+ * The badge shows one window, but the plan is governed by all of them. Listing
+ * the rest in the accessible label keeps the weekly limit reachable without
+ * opening the model selector, and without adding a control to a toolbar that
+ * has to stay legible in a narrow pane.
+ */
+function collectQuotaAriaWindows(
+  usage: ProviderUsageSnapshot | null | undefined,
+  primaryWindow: ProviderUsageWindow,
+): ProviderUsageWindow[] {
+  if (!isQuotaUsage(usage)) {
+    return [primaryWindow];
+  }
+
+  const secondaryWindows = usage.windows
+    .map(normalizeUsageWindow)
+    .filter(window => window.label !== primaryWindow.label);
+
+  return [primaryWindow, ...secondaryWindows];
+}
+
+function formatQuotaAriaLabel(plan: string, windows: readonly ProviderUsageWindow[]): string {
+  return windows
+    .map((window, index) => formatQuotaAriaSegment(plan, window, index === 0))
+    .join('; ');
+}
+
+/**
+ * The accessible label reads as one sentence, which is right for a screen
+ * reader and wrong for the eyes: on a plan with several windows the numbers run
+ * together. The tooltip therefore puts the plan and the limits heading on the
+ * first line, then one compact window per line. Its dedicated CSS class keeps
+ * those intentional line breaks without wrapping the individual rows.
+ */
+function formatQuotaTooltip(plan: string, windows: readonly ProviderUsageWindow[]): string {
+  return [
+    t('chat.ui.usage.limitsHeading', { plan }),
+    ...windows.map((window) => {
+      const values = {
+        window: formatQuotaTooltipWindowLabel(window),
+        percent: window.pct,
+        reset: formatPlanResetInstant(window.resetAt) ?? window.reset,
+      };
+      return isUsagePctKnown(window)
+        ? t('chat.ui.usage.tooltipWithPercent', values)
+        : t('chat.ui.usage.tooltipWithoutPercent', values);
+    }),
+  ].join('\n');
+}
+
+function formatQuotaAriaSegment(
+  plan: string,
+  window: ProviderUsageWindow,
+  isPrimary: boolean,
+): string {
   const limitDescription = formatQuotaLimitDescription(window);
-  return isUsagePctKnown(window)
-    ? t('chat.ui.usage.ariaWithPercent', {
+  const reset = window.reset;
+  if (isUsagePctKnown(window)) {
+    return isPrimary
+      ? t('chat.ui.usage.ariaWithPercent', {
+        plan,
+        limit: limitDescription,
+        percent: window.pct,
+        reset,
+      })
+      : t('chat.ui.usage.ariaAdditionalWithPercent', {
+        limit: limitDescription,
+        percent: window.pct,
+        reset,
+      });
+  }
+
+  return isPrimary
+    ? t('chat.ui.usage.ariaWithoutPercent', {
       plan,
       limit: limitDescription,
-      percent: window.pct,
-      reset: window.reset,
+      reset,
     })
-    : t('chat.ui.usage.ariaWithoutPercent', {
-      plan,
+    : t('chat.ui.usage.ariaAdditionalWithoutPercent', {
       limit: limitDescription,
-      reset: window.reset,
+      reset,
     });
 }
 
@@ -904,7 +983,12 @@ export class PlanUsageBadge {
     }
     this.valueEl?.setText(formatUsagePct(window));
 
-    this.container.setAttribute('aria-label', formatQuotaAriaLabel(usage.plan, window));
+    const labelledWindows = collectQuotaAriaWindows(usage, window);
+    this.container.setAttribute('aria-label', formatQuotaAriaLabel(usage.plan, labelledWindows));
+    setTooltip(this.container, formatQuotaTooltip(usage.plan, labelledWindows), {
+      placement: 'top',
+      classes: [PLAN_USAGE_TOOLTIP_CLASS],
+    });
   }
 
   private renderSpendUsage(usage: ProviderUsageSnapshot & { spend: string }): void {
@@ -917,6 +1001,10 @@ export class PlanUsageBadge {
     this.meterEl?.addClass('grimoire-hidden');
     this.valueEl?.setText(stripThisMonth(usage.spend));
     this.container.setAttribute('aria-label', `${usage.plan}: ${usage.spend}`);
+    setTooltip(this.container, `${usage.plan}\n${usage.spend}`, {
+      placement: 'top',
+      classes: [PLAN_USAGE_TOOLTIP_CLASS],
+    });
   }
 }
 

@@ -178,6 +178,12 @@ export interface ProviderPlanUsageWindow {
   pctKnown?: boolean;
   /** Short human reset label, e.g. "3:20p", "Mon", "midnight". */
   reset: string;
+  /**
+   * The reset instant in epoch milliseconds, when the provider reports one.
+   * `reset` stays the short label for narrow surfaces; this is the exact
+   * moment, spelled out where there is room for it.
+   */
+  resetAt?: number;
 }
 
 export interface ProviderPathIconSvg {

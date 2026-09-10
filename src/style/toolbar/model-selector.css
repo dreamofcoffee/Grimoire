@@ -771,3 +771,20 @@
   opacity: 0.6;
   pointer-events: none;
 }
+
+/* The badge tooltip names the plan on one line and one quota window per line.
+   Size it to the longest line instead of Obsidian's default tooltip width so
+   an exact reset date and time do not wrap into a fourth line.
+
+   `max-content` is capped rather than left unbounded: a provider is free to
+   report a long plan name, and a tooltip wider than the window is unreadable
+   whichever end gets clipped. The cap only ever binds past that point, and
+   `pre-wrap` is what makes it degrade into a wrapped row instead of text
+   spilling out of its own box — it preserves the intentional line breaks
+   exactly as `pre` does, and wraps nothing while the natural width fits. */
+.grimoire-plan-usage-tooltip {
+  width: max-content;
+  max-width: 90vw;
+  white-space: pre-wrap;
+  text-align: left;
+}

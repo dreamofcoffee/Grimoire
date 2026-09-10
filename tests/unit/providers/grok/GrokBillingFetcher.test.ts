@@ -29,6 +29,7 @@ describe('GrokBillingFetcher', () => {
         pct: 0,
         pctKnown: true,
         reset: expect.stringMatching(/Jul/),
+        resetAt: expect.any(Number),
       }],
     });
   });
@@ -53,6 +54,7 @@ describe('GrokBillingFetcher', () => {
         pct: 43,
         pctKnown: true,
         reset: expect.any(String),
+        resetAt: expect.any(Number),
       }],
     });
   });
@@ -66,6 +68,7 @@ describe('GrokBillingFetcher', () => {
         pct: 6,
         pctKnown: true,
         reset: expect.stringMatching(/Jul/),
+        resetAt: expect.any(Number),
       }],
     });
   });

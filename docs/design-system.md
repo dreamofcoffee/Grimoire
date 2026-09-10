@@ -376,6 +376,12 @@ the toolbar, because a line inside a box that has one is a second box.
   context, MCP servers (a 5px accent dot when any is enabled), permissions, plan mode (pressed = an
   accent glyph on a 12% accent wash). Every one is transparent at rest and takes the hover wash on
   hover; they were sitting on a permanent raised surface, so eight controls read as pressed.
+- **Plan usage** stays compact in the toolbar: the badge names one primary window and its percentage.
+  Its tooltip is the complete reading surface, headed by the plan name and “limits”, with every quota
+  window on a separate unwrapped row and an exact weekday, date and time when the provider reports
+  the reset instant. The accessible label names the same windows as one sentence instead of copying
+  the visual line breaks. The static drawing omits this transient hover surface; current wide and
+  narrow Obsidian screenshots are the review evidence for its width and placement.
 - **Send** is the one filled action: 28px, accent, `--grimoire-accent-contrast`, a 15px arrow at
   stroke 2.25. **While streaming the same square becomes Stop, in place.** Nothing to send is an
   inert square in `--grimoire-line`, not a dimmed accent.

@@ -17,6 +17,21 @@ function getLastRule(css: string, selector: string): string {
 }
 
 describe('model-selector.css', () => {
+  it('sizes the plan usage tooltip to unwrapped quota rows', () => {
+    const css = readModelSelectorCss();
+
+    // The tooltip text is built with newlines, while each exact reset stamp
+    // must remain on one row instead of wrapping at Obsidian's default width.
+    // The width is still capped at the viewport, and `pre-wrap` keeps that cap
+    // honest: the line breaks survive, and an over-long plan name wraps instead
+    // of overflowing the tooltip.
+    const rule = getRule(css, '.grimoire-plan-usage-tooltip');
+    expect(rule).toContain('width: max-content');
+    expect(rule).toContain('max-width: 90vw');
+    expect(rule).toContain('white-space: pre-wrap');
+    expect(rule).toContain('text-align: left');
+  });
+
   it('keeps provider group headers visually flat', () => {
     const css = readModelSelectorCss();
 

@@ -109,6 +109,7 @@ describe('GrokPlanUsageStore', () => {
         pct: 12,
         pctKnown: true,
         reset: expect.stringMatching(/Jul/),
+        resetAt: expect.any(Number),
       }],
     });
   });

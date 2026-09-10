@@ -1101,8 +1101,116 @@ describe('PlanUsageBadge', () => {
     expect(parentEl.querySelector('.grimoire-plan-usage-badge-label')?.textContent).toBe('5H');
     expect(parentEl.querySelector('.grimoire-plan-usage-badge-fill')?.style.width).toBe('47%');
     expect(parentEl.querySelector('.grimoire-plan-usage-badge-value')?.textContent).toBe('47%');
-    expect(container?.getAttribute('aria-label')).toBe('Max 20x 5-hour limit: 47% used, resets 3:20p');
+    expect(container?.getAttribute('aria-label')).toBe('Max 20x 5-hour limit: 47% used, resets 3:20p; Weekly limit: 71% used, resets Mon');
     expect(parentEl.querySelector('.grimoire-plan-usage-badge-tip')).toBeNull();
+  });
+
+  it('breaks the tooltip into the plan and one line per quota window', () => {
+    callbacks.getProviderUsage.mockReturnValue({
+      plan: 'Max 20x',
+      windows: [
+        { label: '5-hr', pct: 47, reset: '3:20p' },
+        { label: 'Weekly', pct: 71, reset: 'Mon' },
+      ],
+    });
+
+    badge.updateDisplay();
+
+    const container = parentEl.querySelector('.grimoire-plan-usage-badge');
+    expect(setTooltip).toHaveBeenCalledWith(
+      container,
+      'Max 20x limits:\n5-hour: 47%, resets 3:20p\nWeekly: 71%, resets Mon',
+      { placement: 'top', classes: ['grimoire-plan-usage-tooltip'] },
+    );
+  });
+
+  it('keeps model families distinct in quota tooltips and accessible labels', () => {
+    callbacks.getProviderUsage.mockReturnValue({
+      plan: 'Antigravity',
+      windows: [
+        { label: 'Gemini 5h', pct: 10, reset: 'Thu' },
+        { label: 'Claude/GPT 5h', pct: 90, reset: 'Fri' },
+      ],
+    });
+
+    badge.updateDisplay();
+
+    const container = parentEl.querySelector('.grimoire-plan-usage-badge');
+    expect(setTooltip).toHaveBeenCalledWith(
+      container,
+      'Antigravity limits:\nGemini 5-hour: 10%, resets Thu\nClaude/GPT 5-hour: 90%, resets Fri',
+      { placement: 'top', classes: ['grimoire-plan-usage-tooltip'] },
+    );
+    expect(container?.getAttribute('aria-label')).toBe(
+      'Antigravity Gemini 5-hour limit: 10% used, resets Thu; Claude/GPT 5-hour limit: 90% used, resets Fri',
+    );
+  });
+
+  it('spells the exact reset instant out in the tooltip when the provider reports one', () => {
+    const fiveHourReset = new Date(2026, 8, 9, 23, 30);
+    const weeklyReset = new Date(2026, 8, 12, 2, 0);
+    const stamp = (date: Date): string => [
+      new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date),
+      new Intl.DateTimeFormat(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date),
+      new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }).format(date),
+    ].join(' ');
+
+    callbacks.getProviderUsage.mockReturnValue({
+      plan: 'Claude Code',
+      windows: [
+        { label: '5-hr', pct: 73, reset: '23:30', resetAt: fiveHourReset.getTime() },
+        { label: 'Weekly', pct: 75, reset: 'Sat', resetAt: weeklyReset.getTime() },
+      ],
+    });
+
+    badge.updateDisplay();
+
+    const container = parentEl.querySelector('.grimoire-plan-usage-badge');
+    // The row and the badge keep the short label; only the tooltip has room.
+    expect(container?.getAttribute('aria-label')).toBe(
+      'Claude Code 5-hour limit: 73% used, resets 23:30; Weekly limit: 75% used, resets Sat',
+    );
+    expect(setTooltip).toHaveBeenCalledWith(
+      container,
+      [
+        'Claude Code limits:',
+        `5-hour: 73%, resets ${stamp(fiveHourReset)}`,
+        `Weekly: 75%, resets ${stamp(weeklyReset)}`,
+      ].join('\n'),
+      { placement: 'top', classes: ['grimoire-plan-usage-tooltip'] },
+    );
+  });
+
+  it('breaks the pay-as-you-go tooltip onto its own line', () => {
+    callbacks.getProviderUsage.mockReturnValue({
+      plan: 'API keys',
+      spend: '$4.20 this month',
+    });
+
+    badge.updateDisplay();
+
+    const container = parentEl.querySelector('.grimoire-plan-usage-badge');
+    expect(setTooltip).toHaveBeenCalledWith(
+      container,
+      'API keys\n$4.20 this month',
+      { placement: 'top', classes: ['grimoire-plan-usage-tooltip'] },
+    );
+  });
+
+  it('lists a reset-only secondary window in the accessible label', () => {
+    callbacks.getProviderUsage.mockReturnValue({
+      plan: 'Max 20x',
+      windows: [
+        { label: '5-hr', pct: 47, reset: '3:20p' },
+        { label: 'Weekly', pct: 0, pctKnown: false, reset: 'Mon' },
+      ],
+    });
+
+    badge.updateDisplay();
+
+    const container = parentEl.querySelector('.grimoire-plan-usage-badge');
+    expect(parentEl.querySelector('.grimoire-plan-usage-badge-value')?.textContent).toBe('47%');
+    expect(container?.getAttribute('aria-label')).toBe('Max 20x 5-hour limit: 47% used, resets 3:20p; Weekly limit: resets Mon');
   });
 
   it('renders non-5-hour quota windows inline next to the model selector', () => {
