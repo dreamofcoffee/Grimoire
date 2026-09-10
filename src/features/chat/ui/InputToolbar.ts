@@ -229,17 +229,19 @@ function formatQuotaBadgeLabel(label: string): string {
 }
 
 function formatQuotaLimitDescription(window: ProviderUsageWindow): string {
-  if (FIVE_HOUR_WINDOW_PATTERN.test(window.label)) {
+  const label = formatQuotaTooltipWindowLabel(window);
+  if (label === t('chat.ui.usage.fiveHourWindow')) {
     return t('chat.ui.usage.fiveHourLimit');
   }
 
-  return t('chat.ui.usage.namedLimit', { name: window.label });
+  return t('chat.ui.usage.namedLimit', { name: label });
 }
 
 function formatQuotaTooltipWindowLabel(window: ProviderUsageWindow): string {
-  return FIVE_HOUR_WINDOW_PATTERN.test(window.label)
-    ? t('chat.ui.usage.fiveHourWindow')
-    : window.label;
+  return window.label.replace(
+    /\b5\s*-?\s*h(?:ours?|rs?)?\b/i,
+    t('chat.ui.usage.fiveHourWindow'),
+  );
 }
 
 function stripThisMonth(spend: string): string {

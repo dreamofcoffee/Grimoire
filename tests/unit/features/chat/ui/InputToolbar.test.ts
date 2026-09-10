@@ -1124,6 +1124,28 @@ describe('PlanUsageBadge', () => {
     );
   });
 
+  it('keeps model families distinct in quota tooltips and accessible labels', () => {
+    callbacks.getProviderUsage.mockReturnValue({
+      plan: 'Antigravity',
+      windows: [
+        { label: 'Gemini 5h', pct: 10, reset: 'Thu' },
+        { label: 'Claude/GPT 5h', pct: 90, reset: 'Fri' },
+      ],
+    });
+
+    badge.updateDisplay();
+
+    const container = parentEl.querySelector('.grimoire-plan-usage-badge');
+    expect(setTooltip).toHaveBeenCalledWith(
+      container,
+      'Antigravity limits:\nGemini 5-hour: 10%, resets Thu\nClaude/GPT 5-hour: 90%, resets Fri',
+      { placement: 'top', classes: ['grimoire-plan-usage-tooltip'] },
+    );
+    expect(container?.getAttribute('aria-label')).toBe(
+      'Antigravity Gemini 5-hour limit: 10% used, resets Thu; Claude/GPT 5-hour limit: 90% used, resets Fri',
+    );
+  });
+
   it('spells the exact reset instant out in the tooltip when the provider reports one', () => {
     const fiveHourReset = new Date(2026, 8, 9, 23, 30);
     const weeklyReset = new Date(2026, 8, 12, 2, 0);
