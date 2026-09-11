@@ -259,7 +259,9 @@ reasonix setup
 reasonix --version
 ```
 
-Execute `reasonix setup` para configurar um provedor de modelos e suas credenciais e então ative o Reasonix no Grimoire. O Reasonix mantém dois ajustes onde outros provedores mantêm um: o modo da sessão (`normal`, `plan`, `goal`) e uma postura de aprovação de ferramentas separada (`ask`, `auto`, `yolo`). A barra do Grimoire controla os dois. Safe é `normal` perguntando, Plan é `plan` perguntando e Auto-approve é `normal` em `yolo`; `goal` é do próprio Reasonix e aparece como Safe.
+Execute `reasonix setup` para configurar um provedor de modelos e suas credenciais e então ative o Reasonix no Grimoire. O Reasonix mantém dois ajustes onde outros provedores mantêm um: o modo da sessão (`normal`, `plan`, `goal`) e uma postura de aprovação de ferramentas separada (`ask`, `auto`, `yolo`). A barra do Grimoire controla os dois. Safe é `normal` perguntando, Plan é `plan` perguntando e Auto-approve é `normal` em `yolo`; `goal` é do próprio Reasonix e aparece como Safe. Como a postura é a única coisa que separa Safe de Auto-approve, um turno que não consegue defini-la é recusado em vez de rodar silenciosamente na mais frouxa.
+
+O Reasonix também faz perguntas, não só pedidos de permissão: sua ferramenta `ask` chega pelo mesmo canal e é desenhada como um cartão cuja descrição é a pergunta e cujas opções numeradas são as respostas. Escolha pelo número; `Enter` não faz nada num cartão com várias respostas, para que uma tecla apertada por hábito não escolha por você.
 
 - [Documentação do Reasonix](https://reasonix.io/docs/)
 - [Reasonix no GitHub](https://github.com/esengine/DeepSeek-Reasonix)

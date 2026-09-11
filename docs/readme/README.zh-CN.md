@@ -257,7 +257,9 @@ reasonix setup
 reasonix --version
 ```
 
-运行 `reasonix setup` 配置模型供应商及其凭据，然后在 Grimoire 中启用 Reasonix。别的供应商只有一项设置的地方，Reasonix 有两项：会话模式（`normal`、`plan`、`goal`）以及单独的工具批准姿态（`ask`、`auto`、`yolo`）。Grimoire 的工具栏同时驱动两者。Safe 是会询问的 `normal`，Plan 是会询问的 `plan`，Auto-approve 是处于 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，显示为 Safe。
+运行 `reasonix setup` 配置模型供应商及其凭据，然后在 Grimoire 中启用 Reasonix。别的供应商只有一项设置的地方，Reasonix 有两项：会话模式（`normal`、`plan`、`goal`）以及单独的工具批准姿态（`ask`、`auto`、`yolo`）。Grimoire 的工具栏同时驱动两者。Safe 是会询问的 `normal`，Plan 是会询问的 `plan`，Auto-approve 是处于 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，显示为 Safe。 由于区分 Safe 与 Auto-approve 的只有批准姿态，无法设置该姿态的回合会被拒绝，而不是悄悄以更宽松的方式执行。
+
+Reasonix 不只请求权限，也会提问：它的 `ask` 工具经由同一通道到达，绘制为一张卡片，描述是问题，带编号的选项是答案。请按编号选择；在有多个答案的卡片上 `Enter` 不做任何事，习惯性的按键不会替你做决定。
 
 - [Reasonix 文档](https://reasonix.io/docs/)
 - [GitHub 上的 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)

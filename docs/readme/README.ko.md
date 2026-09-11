@@ -259,7 +259,9 @@ reasonix setup
 reasonix --version
 ```
 
-`reasonix setup`으로 모델 공급자와 자격 증명을 설정한 뒤 Grimoire에서 Reasonix를 켜세요. Reasonix는 다른 제공자가 하나만 두는 설정을 둘로 나눕니다. 세션 모드(`normal`, `plan`, `goal`)와 별도의 도구 승인 태도(`ask`, `auto`, `yolo`)입니다. Grimoire 툴바가 둘 다 조작합니다. Safe는 묻는 `normal`, Plan은 묻는 `plan`, Auto-approve는 `yolo` 상태의 `normal`입니다. `goal`은 Reasonix 고유이며 Safe로 표시됩니다.
+`reasonix setup`으로 모델 공급자와 자격 증명을 설정한 뒤 Grimoire에서 Reasonix를 켜세요. Reasonix는 다른 제공자가 하나만 두는 설정을 둘로 나눕니다. 세션 모드(`normal`, `plan`, `goal`)와 별도의 도구 승인 태도(`ask`, `auto`, `yolo`)입니다. Grimoire 툴바가 둘 다 조작합니다. Safe는 묻는 `normal`, Plan은 묻는 `plan`, Auto-approve는 `yolo` 상태의 `normal`입니다. `goal`은 Reasonix 고유이며 Safe로 표시됩니다. Safe와 Auto-approve를 가르는 것은 태도뿐이므로, 그것을 설정하지 못한 턴은 더 느슨한 쪽에서 조용히 실행되는 대신 거부됩니다.
+
+Reasonix는 권한만이 아니라 질문도 합니다. `ask` 도구는 같은 채널로 도착하며, 설명이 질문이고 번호가 붙은 선택지가 답인 카드로 그려집니다. 번호로 고르세요. 답이 여러 개인 카드에서는 `Enter`가 아무 일도 하지 않으므로 습관적인 키 입력이 대신 선택하지 않습니다.
 
 - [Reasonix 문서](https://reasonix.io/docs/)
 - [GitHub의 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)

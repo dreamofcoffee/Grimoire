@@ -254,7 +254,9 @@ reasonix setup
 reasonix --version
 ```
 
-執行 `reasonix setup` 設定 model provider 與憑證，然後在 Grimoire 中啟用 Reasonix。別的 provider 只有一項設定的地方，Reasonix 有兩項：session mode（`normal`、`plan`、`goal`）以及獨立的 tool 批准姿態（`ask`、`auto`、`yolo`）。Grimoire 的工具列同時驅動兩者。Safe 是會詢問的 `normal`，Plan 是會詢問的 `plan`，Auto-approve 是處於 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，顯示為 Safe。
+執行 `reasonix setup` 設定 model provider 與憑證，然後在 Grimoire 中啟用 Reasonix。別的 provider 只有一項設定的地方，Reasonix 有兩項：session mode（`normal`、`plan`、`goal`）以及獨立的 tool 批准姿態（`ask`、`auto`、`yolo`）。Grimoire 的工具列同時驅動兩者。Safe 是會詢問的 `normal`，Plan 是會詢問的 `plan`，Auto-approve 是處於 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，顯示為 Safe。 由於區分 Safe 與 Auto-approve 的只有批准姿態，無法設定該姿態的 turn 會被拒絕，而不是悄悄以更寬鬆的方式執行。
+
+Reasonix 不只請求權限，也會提問：它的 `ask` tool 經由同一通道抵達，繪製成一張卡片，描述是問題，帶編號的選項是答案。請按編號選擇；在有多個答案的卡片上 `Enter` 不做任何事，習慣性的按鍵不會替你做決定。
 
 - [Reasonix 文件](https://reasonix.io/docs/)
 - [GitHub 上的 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)

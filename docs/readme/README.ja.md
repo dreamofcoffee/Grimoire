@@ -255,7 +255,9 @@ reasonix setup
 reasonix --version
 ```
 
-`reasonix setup` を実行して model provider と認証情報を設定し、Grimoire で Reasonix を有効にしてください。Reasonix は他の provider が 1 つ持つ設定を 2 つ持ちます。session mode（`normal`、`plan`、`goal`）と、別立ての tool 承認姿勢（`ask`、`auto`、`yolo`）です。Grimoire のツールバーは両方を操作します。Safe は確認する `normal`、Plan は確認する `plan`、Auto-approve は `yolo` の `normal` です。`goal` は Reasonix 固有で、Safe として表示されます。
+`reasonix setup` を実行して model provider と認証情報を設定し、Grimoire で Reasonix を有効にしてください。Reasonix は他の provider が 1 つ持つ設定を 2 つ持ちます。session mode（`normal`、`plan`、`goal`）と、別立ての tool 承認姿勢（`ask`、`auto`、`yolo`）です。Grimoire のツールバーは両方を操作します。Safe は確認する `normal`、Plan は確認する `plan`、Auto-approve は `yolo` の `normal` です。`goal` は Reasonix 固有で、Safe として表示されます。 Safe と Auto-approve を分けているのは姿勢だけなので、それを設定できなかった turn は、緩いほうで黙って走るのではなく拒否されます。
+
+Reasonix は許可だけでなく質問もします。`ask` tool は同じチャネルで届き、説明が質問、番号付きの選択肢が回答というカードとして描かれます。番号で選んでください。回答が複数あるカードでは `Enter` は何もしないので、習慣的なキー操作があなたの代わりに選ぶことはありません。
 
 - [Reasonix ドキュメント](https://reasonix.io/docs/)
 - [GitHub 上の Reasonix](https://github.com/esengine/DeepSeek-Reasonix)
