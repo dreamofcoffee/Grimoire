@@ -15,6 +15,20 @@ function recordedSession(): Parameters<ReasonixSessionConfigState['syncSessionDi
         { modelId: 'custom-api-z-ai/glm-5.3-flash', name: 'custom-api-z-ai/glm-5.3-flash', description: 'custom-api-z-ai' },
       ],
     },
+    configOptions: [
+      {
+        id: 'effort',
+        name: 'Effort',
+        category: 'thought_level',
+        type: 'select',
+        currentValue: 'auto',
+        options: [
+          { value: 'auto', name: 'Auto' },
+          { value: 'enabled', name: 'Enabled' },
+          { value: 'disabled', name: 'Disabled' },
+        ],
+      },
+    ],
     modes: {
       currentModeId: 'normal',
       availableModes: [
@@ -89,6 +103,34 @@ describe('ReasonixSessionConfigState', () => {
 
       expect(getReasonixProviderSettings(settings).selectedMode).toBe('plan');
       expect(state.sessionModeId).toBe('normal');
+    });
+  });
+
+  describe('the reasoning levels the session offers', () => {
+    it('takes them from the effort option, dropping the auto that is not a level', () => {
+      const { state, settings } = createState();
+
+      expect(state.syncSessionDiscovery(recordedSession())).toBe(true);
+
+      expect(getReasonixProviderSettings(settings).availableEfforts).toEqual([
+        { id: 'enabled', name: 'Enabled' },
+        { id: 'disabled', name: 'Disabled' },
+      ]);
+    });
+
+    it('asks for nothing on auto, and nothing the session did not offer', () => {
+      // Reasonix validates the level against the model and answers
+      // `UNSUPPORTED_REASONING_EFFORT`, so an unoffered one is a failed turn.
+      const { state, settings } = createState();
+      state.syncSessionDiscovery(recordedSession());
+
+      expect(state.resolveSelectedEffort()).toBeNull();
+
+      updateReasonixProviderSettings(settings, { effortLevel: 'max' });
+      expect(state.resolveSelectedEffort()).toBeNull();
+
+      updateReasonixProviderSettings(settings, { effortLevel: 'disabled' });
+      expect(state.resolveSelectedEffort()).toBe('disabled');
     });
   });
 

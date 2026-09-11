@@ -50,7 +50,7 @@ Grimoire 面向已经使用 Obsidian 工作，并希望 AI 助手像仓库的一
 | 规划模式 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
 | 图片附件 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 否 |
 | 指令模式 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
-| 推理强度控制 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 否 |
+| 推理强度控制 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 |
 | 回退 | 否 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 | 否 |
 | 分叉 | 是 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 | 否 |
 | 供应商斜杠命令 | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
@@ -260,6 +260,8 @@ reasonix --version
 运行 `reasonix setup` 配置模型供应商及其凭据，然后在 Grimoire 中启用 Reasonix。别的供应商只有一项设置的地方，Reasonix 有两项：会话模式（`normal`、`plan`、`goal`）以及单独的工具批准姿态（`ask`、`auto`、`yolo`）。Grimoire 的工具栏同时驱动两者。Safe 是会询问的 `normal`，Plan 是会询问的 `plan`，Auto-approve 是处于 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，显示为 Safe。 由于区分 Safe 与 Auto-approve 的只有批准姿态，无法设置该姿态的回合会被拒绝，而不是悄悄以更宽松的方式执行。
 
 Reasonix 不只请求权限，也会提问：它的 `ask` 工具经由同一通道到达，绘制为一张卡片，描述是问题，带编号的选项是答案。请按编号选择；在有多个答案的卡片上 `Enter` 不做任何事，习惯性的按键不会替你做决定。
+
+推理强度不是固定列表，而是由会话填充的选择器。模型接受哪些级别由服务它的供应商区块决定：声明了 `supported_efforts` 的区块提供 Disabled、Low、High 和 Max，未声明的则获得其类型的内置集合。Grimoire 读取当前会话提供的内容，并把 Auto 放在最前，它把选择权交还给 Reasonix。会话未提供的级别永远不会被发送，因为 CLI 会对照模型拒绝它。
 
 - [Reasonix 文档](https://reasonix.io/docs/)
 - [GitHub 上的 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)

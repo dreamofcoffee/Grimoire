@@ -15,6 +15,7 @@ import {
 } from '../models';
 import {
   getReasonixProviderSettings,
+  REASONIX_AUTO_EFFORT,
   updateReasonixProviderSettings,
 } from '../settings';
 
@@ -39,18 +40,19 @@ const REASONIX_MODELS: ProviderUIOption[] = [
  */
 export const REASONIX_DEFAULT_CONTEXT_WINDOW = 200_000;
 /**
- * One option, because the capability says `reasoningControl: 'none'` and the
- * contribution builds no reasoning group from it.
+ * The picker is built from the session, because the levels are the session's.
  *
- * Not because Reasonix has no effort control — it has an `effort` config option
- * — but because that option is `auto`, `enabled`, `disabled`, a switch for
- * whether to think rather than the tiered budget `reasoningControl` models.
- * Driving it is a separate piece of work; `ReasonixProviderModule` says so.
+ * Which levels a model takes is decided by the provider block that serves it:
+ * one with `supported_efforts` offers `disabled`, `low`, `high`, `max`, one
+ * without gets the built-in set for its kind. So there is no static list to
+ * write here — `availableEfforts` is discovered the way the model catalogue is,
+ * and `auto` heads it as the one value that always works, meaning "leave it to
+ * Reasonix". Before a session has ever opened, `auto` is the whole list.
  */
-const REASONIX_DEFAULT_REASONING = 'default';
-const REASONIX_REASONING_OPTIONS: ProviderReasoningOption[] = [
-  { label: 'Default', value: REASONIX_DEFAULT_REASONING },
-];
+const REASONIX_AUTO_REASONING_OPTION: ProviderReasoningOption = {
+  label: 'Auto',
+  value: REASONIX_AUTO_EFFORT,
+};
 const REASONIX_PERMISSION_MODE_TOGGLE: ProviderPermissionModeToggleConfig = {
   inactiveValue: 'normal',
   inactiveLabel: 'Safe',
@@ -97,12 +99,20 @@ export const reasonixChatUIConfig: ProviderChatUIConfig = {
     return false;
   },
 
-  getReasoningOptions(): ProviderReasoningOption[] {
-    return REASONIX_REASONING_OPTIONS.map((option) => ({ ...option }));
+  getReasoningOptions(_model: string, settings: Record<string, unknown>): ProviderReasoningOption[] {
+    const discovered = settings ? getReasonixProviderSettings(settings).availableEfforts : [];
+    return [
+      { ...REASONIX_AUTO_REASONING_OPTION },
+      ...discovered.map((effort) => ({
+        ...(effort.description ? { description: effort.description } : {}),
+        label: effort.name,
+        value: effort.id,
+      })),
+    ];
   },
 
-  getDefaultReasoningValue(): string {
-    return REASONIX_DEFAULT_REASONING;
+  getDefaultReasoningValue(_model: string, settings: Record<string, unknown>): string {
+    return getReasonixProviderSettings(settings).effortLevel;
   },
 
   getContextWindowSize(model: string, customLimits?: Record<string, number>): number {
@@ -121,10 +131,28 @@ export const reasonixChatUIConfig: ProviderChatUIConfig = {
     const settingsBag = settings as Record<string, unknown>;
     const rawModelId = decodeReasonixModelId(model);
     settingsBag.model = rawModelId ? encodeReasonixModelId(rawModelId) : REASONIX_SYNTHETIC_MODEL_ID;
+    settingsBag.effortLevel = getReasonixProviderSettings(settingsBag).effortLevel;
   },
 
-  applyReasoningSelection(): void {
-    // Nothing to apply: see `REASONIX_REASONING_OPTIONS`.
+  applyReasoningSelection(_model: string, value: string, settings: unknown): void {
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+      return;
+    }
+
+    const settingsBag = settings as Record<string, unknown>;
+    // A level the open session did not offer is refused by the agent, so the
+    // selection falls back to `auto` rather than being stored and failing on
+    // the next turn. The picker only shows what the session offered; this is
+    // the guard for a value that arrives any other way.
+    const level = value.trim();
+    const offered = getReasonixProviderSettings(settingsBag).availableEfforts;
+    const next = updateReasonixProviderSettings(settingsBag, {
+      effortLevel: level && (level === REASONIX_AUTO_EFFORT
+        || offered.some(effort => effort.id === level))
+        ? level
+        : REASONIX_AUTO_EFFORT,
+    });
+    settingsBag.effortLevel = next.effortLevel;
   },
 
   normalizeModelVariant(model: string, settings: Record<string, unknown>): string {

@@ -18,7 +18,7 @@ describe('Reasonix provider registration', () => {
     updateReasonixProviderSettings(settings, { enabled: true });
 
     expect(providerCatalog().isEnabled(settings, 'reasonix')).toBe(true);
-    expect(providerCatalog().capabilities('reasonix')?.reasoningControl).toBe('none');
+    expect(providerCatalog().capabilities('reasonix')?.reasoningControl).toBe('effort');
   });
 
   it('creates a Reasonix runtime through the composition the plugin owns', () => {

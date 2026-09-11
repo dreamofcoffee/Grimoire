@@ -412,6 +412,23 @@ live('Reasonix live smoke', () => {
     await shutdown();
   });
 
+  it('row 18: learns which reasoning levels this model takes', async () => {
+    // The levels are the provider block's, not Grimoire's: one with
+    // `supported_efforts` offers disabled/low/high/max, one without gets the
+    // built-in set for its kind. Whatever this account is configured with, the
+    // session must be the source and `auto` must not be among them — it is the
+    // picker's own default, not a level the agent takes.
+    const { execution, plugin, shutdown } = await createHarness();
+
+    await execution.metadata.discoverMetadata();
+
+    const stored = getReasonixProviderSettings(plugin.settings);
+    report('ROW 18', JSON.stringify(stored.availableEfforts));
+    expect(stored.availableEfforts.length).toBeGreaterThan(0);
+    expect(stored.availableEfforts.map(effort => effort.id)).not.toContain('auto');
+    await shutdown();
+  });
+
   it('row 19: shows the spend when there is spend to show', async () => {
     reasonixPlanUsageStore.reset();
     const { runtime, plugin, shutdown } = await createHarness();

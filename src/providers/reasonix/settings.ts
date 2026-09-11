@@ -19,6 +19,22 @@ export interface ReasonixMode {
   name: string;
 }
 
+/**
+ * One reasoning effort the open session offered.
+ *
+ * **Discovered, never assumed.** Which levels a model takes is decided by the
+ * provider block that serves it: a block with `supported_efforts` offers
+ * `disabled`, `low`, `high`, `max`, and one without gets the built-in set for
+ * its kind — `auto`, `enabled`, `disabled` for an OpenAI-shaped endpoint. The
+ * CLI validates the value against the model and refuses one it does not take,
+ * so a level the session did not offer is never sent.
+ */
+export interface ReasonixEffort {
+  description?: string | null;
+  id: string;
+  name: string;
+}
+
 export interface PersistedReasonixProviderSettings {
   cliPath: string;
   cliPathsByHost: HostnameCliPaths;
@@ -32,14 +48,20 @@ export interface PersistedReasonixProviderSettings {
   environmentHash: string;
   environmentVariables: string;
   modelAliases: Record<string, string>;
+  /** The reasoning effort the person picked, or `auto` to leave it to Reasonix. */
+  effortLevel: string;
   selectedMode: string;
   visibleModels: string[];
 }
 
 export interface ReasonixProviderSettings extends PersistedReasonixProviderSettings {
   availableModes: ReasonixMode[];
+  availableEfforts: ReasonixEffort[];
   discoveredModels: ReasonixDiscoveredModel[];
 }
+
+/** What a session is left on when nobody has picked: Reasonix's own choice. */
+export const REASONIX_AUTO_EFFORT = 'auto';
 
 export const DEFAULT_REASONIX_PROVIDER_SETTINGS: Readonly<PersistedReasonixProviderSettings> = Object.freeze({
   cliPath: '',
@@ -49,6 +71,7 @@ export const DEFAULT_REASONIX_PROVIDER_SETTINGS: Readonly<PersistedReasonixProvi
   environmentHash: '',
   environmentVariables: '',
   modelAliases: {},
+  effortLevel: REASONIX_AUTO_EFFORT,
   selectedMode: '',
   visibleModels: [],
 });
@@ -137,6 +160,10 @@ function normalizeReasonixDiscoveredModels(value: unknown): ReasonixDiscoveredMo
   return result;
 }
 
+function normalizeReasonixEfforts(value: unknown): ReasonixEffort[] {
+  return normalizeReasonixModes(value);
+}
+
 function normalizeReasonixModes(value: unknown): ReasonixMode[] {
   if (!Array.isArray(value)) {
     return [];
@@ -179,6 +206,7 @@ export function getReasonixProviderSettings(settings: Record<string, unknown>): 
 
   return {
     availableModes: normalizeReasonixModes(config.availableModes),
+    availableEfforts: normalizeReasonixEfforts(config.availableEfforts),
     cliPath: (config.cliPath as string | undefined)
       ?? DEFAULT_REASONIX_PROVIDER_SETTINGS.cliPath,
     cliPathsByHost,
@@ -194,6 +222,9 @@ export function getReasonixProviderSettings(settings: Record<string, unknown>): 
       ?? getProviderEnvironmentVariables(settings, 'reasonix')
       ?? DEFAULT_REASONIX_PROVIDER_SETTINGS.environmentVariables,
     modelAliases: normalizeReasonixModelAliases(config.modelAliases),
+    effortLevel: typeof config.effortLevel === 'string' && config.effortLevel.trim()
+      ? config.effortLevel.trim()
+      : DEFAULT_REASONIX_PROVIDER_SETTINGS.effortLevel,
     selectedMode: (config.selectedMode as string | undefined)
       ?? DEFAULT_REASONIX_PROVIDER_SETTINGS.selectedMode,
     visibleModels: normalizeReasonixVisibleModels(config.visibleModels),
@@ -239,6 +270,7 @@ export function updateReasonixProviderSettings(
     ...current,
     ...updates,
     availableModes: normalizeReasonixModes(updates.availableModes ?? current.availableModes),
+    availableEfforts: normalizeReasonixEfforts(updates.availableEfforts ?? current.availableEfforts),
     cliPath: nextCliPath,
     cliPathsByHost: nextCliPathsByHost,
     discoveredModels: normalizeReasonixDiscoveredModels(updates.discoveredModels ?? current.discoveredModels),
@@ -246,6 +278,9 @@ export function updateReasonixProviderSettings(
       ? updates.discoveredModelsFingerprint
       : current.discoveredModelsFingerprint,
     modelAliases: nextModelAliases,
+    effortLevel: typeof updates.effortLevel === 'string' && updates.effortLevel.trim()
+      ? updates.effortLevel.trim()
+      : current.effortLevel,
     selectedMode: typeof updates.selectedMode === 'string'
       ? updates.selectedMode.trim()
       : current.selectedMode,
@@ -254,6 +289,7 @@ export function updateReasonixProviderSettings(
 
   setProviderConfig(settings, 'reasonix', {
     availableModes: next.availableModes,
+    availableEfforts: next.availableEfforts,
     cliPath: next.cliPath,
     cliPathsByHost: next.cliPathsByHost,
     discoveredModels: next.discoveredModels,
@@ -262,6 +298,7 @@ export function updateReasonixProviderSettings(
     environmentHash: next.environmentHash,
     environmentVariables: next.environmentVariables,
     modelAliases: next.modelAliases,
+    effortLevel: next.effortLevel,
     selectedMode: next.selectedMode,
     visibleModels: next.visibleModels,
   });

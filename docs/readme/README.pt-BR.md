@@ -52,7 +52,7 @@ Ele foi feito para quem já trabalha no Obsidian e quer uma ajuda de IA que se c
 | Modo de plano | Sim | Sim | Sim | Sim | Sim | Sim | Não | Sim | Sim | Sim | Sim |
 | Anexos de imagem | Sim | Sim | Sim | Sim | Sim | Sim | Não | Sim | Sim | Sim | Não |
 | Modo de instrução | Sim | Sim | Sim | Sim | Sim | Sim | Não | Sim | Sim | Sim | Sim |
-| Controles de esforço de raciocínio | Sim | Sim | Sim | Sim | Sim | Sim | Sim | Sim | Sim | Não | Não |
+| Controles de esforço de raciocínio | Sim | Sim | Sim | Sim | Sim | Sim | Sim | Sim | Sim | Não | Sim |
 | Retroceder | Não | Sim | Não | Sim | Não | Não | Não | Não | Não | Não | Não |
 | Bifurcar | Sim | Sim | Não | Sim | Não | Não | Não | Não | Não | Não | Não |
 | Comandos de barra do provedor | Não | Sim | Sim | Sim | Sim | Sim | Não | Sim | Sim | Sim | Sim |
@@ -262,6 +262,8 @@ reasonix --version
 Execute `reasonix setup` para configurar um provedor de modelos e suas credenciais e então ative o Reasonix no Grimoire. O Reasonix mantém dois ajustes onde outros provedores mantêm um: o modo da sessão (`normal`, `plan`, `goal`) e uma postura de aprovação de ferramentas separada (`ask`, `auto`, `yolo`). A barra do Grimoire controla os dois. Safe é `normal` perguntando, Plan é `plan` perguntando e Auto-approve é `normal` em `yolo`; `goal` é do próprio Reasonix e aparece como Safe. Como a postura é a única coisa que separa Safe de Auto-approve, um turno que não consegue defini-la é recusado em vez de rodar silenciosamente na mais frouxa.
 
 O Reasonix também faz perguntas, não só pedidos de permissão: sua ferramenta `ask` chega pelo mesmo canal e é desenhada como um cartão cuja descrição é a pergunta e cujas opções numeradas são as respostas. Escolha pelo número; `Enter` não faz nada num cartão com várias respostas, para que uma tecla apertada por hábito não escolha por você.
+
+O esforço de raciocínio é um seletor alimentado pela sessão, não uma lista fixa. Quais níveis um modelo aceita é decidido pelo bloco de provedor que o serve: um que declara `supported_efforts` oferece Disabled, Low, High e Max; um sem ele recebe o conjunto embutido do seu tipo. O Grimoire lê o que a sessão aberta oferece e põe Auto à frente, o que deixa a escolha para o Reasonix. Um nível que a sessão nunca ofereceu nunca é enviado, porque a CLI o recusa contra o modelo.
 
 - [Documentação do Reasonix](https://reasonix.io/docs/)
 - [Reasonix no GitHub](https://github.com/esengine/DeepSeek-Reasonix)

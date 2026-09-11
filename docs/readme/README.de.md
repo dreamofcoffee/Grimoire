@@ -52,7 +52,7 @@ Grimoire ist für Menschen gebaut, die bereits in Obsidian arbeiten und AI-Hilfe
 | Plan mode | Ja | Ja | Ja | Ja | Ja | Ja | Nein | Ja | Ja | Ja | Ja |
 | Image attachments | Ja | Ja | Ja | Ja | Ja | Ja | Nein | Ja | Ja | Ja | Nein |
 | Instruction mode | Ja | Ja | Ja | Ja | Ja | Ja | Nein | Ja | Ja | Ja | Ja |
-| Reasoning effort controls | Ja | Ja | Ja | Ja | Ja | Ja | Ja | Ja | Ja | Nein | Nein |
+| Reasoning effort controls | Ja | Ja | Ja | Ja | Ja | Ja | Ja | Ja | Ja | Nein | Ja |
 | Rewind | Nein | Ja | Nein | Ja | Nein | Nein | Nein | Nein | Nein | Nein | Nein |
 | Fork | Ja | Ja | Nein | Ja | Nein | Nein | Nein | Nein | Nein | Nein | Nein |
 | Provider slash commands | Nein | Ja | Ja | Ja | Ja | Ja | Nein | Ja | Ja | Ja | Ja |
@@ -256,6 +256,8 @@ reasonix --version
 Führe `reasonix setup` aus, um einen model provider und dessen Zugangsdaten einzurichten, und aktiviere Reasonix anschließend in Grimoire. Reasonix hält zwei Einstellungen, wo andere provider eine haben: den session mode (`normal`, `plan`, `goal`) und eine getrennte tool-approval-Haltung (`ask`, `auto`, `yolo`). Die Grimoire-Toolbar steuert beide. Safe ist `normal` mit Nachfrage, Plan ist `plan` mit Nachfrage, Auto-approve ist `normal` auf `yolo`; `goal` gehört Reasonix und wird als Safe angezeigt. Da allein die Haltung Safe von Auto-approve trennt, wird ein turn, der sie nicht setzen kann, abgelehnt statt stillschweigend in der lockereren zu laufen.
 
 Reasonix stellt auch Fragen, nicht nur Berechtigungen: sein `ask`-tool kommt über denselben Kanal und wird als Karte gezeichnet, deren Beschreibung die Frage ist und deren nummerierte Optionen die Antworten sind. Wähle eine über ihre Nummer; `Enter` tut auf einer Karte mit mehreren Antworten nichts, damit ein gewohnter Tastendruck nicht für dich entscheidet.
+
+Der reasoning effort ist ein picker aus der session, keine feste Liste. Welche Stufen ein model annimmt, entscheidet der provider-Block, der es bedient: einer mit `supported_efforts` bietet Disabled, Low, High und Max, einer ohne bekommt den eingebauten Satz seiner Art. Grimoire liest, was die offene session anbietet, und stellt Auto an den Anfang, was die Wahl Reasonix überlässt. Eine Stufe, die die session nie angeboten hat, wird nie gesendet, denn die CLI weist sie gegen das model zurück.
 
 - [Reasonix-Dokumentation](https://reasonix.io/docs/)
 - [Reasonix auf GitHub](https://github.com/esengine/DeepSeek-Reasonix)

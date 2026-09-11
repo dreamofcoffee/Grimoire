@@ -5,7 +5,12 @@ import {
   extractAcpSessionModelState,
   extractAcpSessionModeState,
 } from '@/providers/acp';
-import type { AcpSessionModelState, AcpSessionModeState } from '@/providers/acp/types';
+import type {
+  AcpSessionConfigOption,
+  AcpSessionConfigSelectOption,
+  AcpSessionModelState,
+  AcpSessionModeState,
+} from '@/providers/acp/types';
 import {
   decodeReasonixModelId,
   encodeReasonixModelId,
@@ -14,7 +19,9 @@ import {
 import { mapReasonixModeToGrimoire } from '@/providers/reasonix/modes';
 import {
   getReasonixProviderSettings,
+  REASONIX_AUTO_EFFORT,
   type ReasonixDiscoveredModel,
+  type ReasonixEffort,
   type ReasonixMode,
   updateReasonixProviderSettings,
 } from '@/providers/reasonix/settings';
@@ -101,6 +108,24 @@ export class ReasonixSessionConfigState {
     return this.permissionMode() === 'full_access';
   }
 
+  /**
+   * The reasoning effort a turn should ask for, or nothing.
+   *
+   * Nothing in three cases, each of which would otherwise be a call the agent
+   * refuses: the person left it on `auto`, the session has not said which
+   * levels it takes, or it said and this is not one of them. Reasonix validates
+   * the value against the model — `UNSUPPORTED_REASONING_EFFORT` — so sending
+   * an unoffered level buys a failure rather than a deeper answer.
+   */
+  resolveSelectedEffort(): string | null {
+    const settings = getReasonixProviderSettings(this.ports.settingsBag());
+    const level = settings.effortLevel.trim();
+    if (!level || level === REASONIX_AUTO_EFFORT) {
+      return null;
+    }
+    return settings.availableEfforts.some(effort => effort.id === level) ? level : null;
+  }
+
   /** What a turn should ask the session to switch to, before translation. */
   resolveSelectedModeId(): string {
     return this.permissionMode()
@@ -167,6 +192,7 @@ export class ReasonixSessionConfigState {
     const modelState = extractAcpSessionModelState(params);
     const modeState = extractAcpSessionModeState(params);
     const updates: Parameters<typeof updateReasonixProviderSettings>[1] = {};
+    const reportedEfforts = readEffortOptions(params.configOptions);
 
     if (modelState.currentModelId) {
       this.currentSessionModelId = modelState.currentModelId;
@@ -215,6 +241,12 @@ export class ReasonixSessionConfigState {
       this.currentSessionModeId = modeState.currentModeId;
     }
 
+    if (reportedEfforts.length > 0
+      && stored.availableEfforts.map(effort => effort.id).join('\u0000')
+        !== reportedEfforts.map(effort => effort.id).join('\u0000')) {
+      updates.availableEfforts = reportedEfforts;
+    }
+
     if (Object.keys(updates).length === 0) {
       return false;
     }
@@ -231,4 +263,37 @@ function sameModels(
   return stored.length === reported.length
     && stored.every((model, index) => model.rawId === reported[index]?.rawId
       && model.label === reported[index]?.label);
+}
+
+/**
+ * The reasoning levels the session says this model takes.
+ *
+ * Read off the `effort` config option rather than assumed: a provider block
+ * with `supported_efforts` offers `disabled`, `low`, `high`, `max`, and one
+ * without gets the built-in set for its kind. `auto` is dropped here because it
+ * is the picker's own default rather than a level, and the picker adds it back.
+ */
+function readEffortOptions(
+  configOptions: readonly AcpSessionConfigOption[] | null | undefined,
+): ReasonixEffort[] {
+  const option = (configOptions ?? []).find(entry => entry?.id === 'effort');
+  if (!option || option.type !== 'select') {
+    return [];
+  }
+  // Flattened, because the protocol allows a grouped select and Reasonix has
+  // only ever sent a flat one: a grouped list read as flat would be empty.
+  const flat: AcpSessionConfigSelectOption[] = option.options.flatMap(entry => (
+    'options' in entry ? entry.options : [entry]
+  ));
+  return flat.flatMap((entry): ReasonixEffort[] => {
+    const id = typeof entry?.value === 'string' ? entry.value.trim() : '';
+    if (!id || id === REASONIX_AUTO_EFFORT) {
+      return [];
+    }
+    return [{
+      ...(entry.description ? { description: entry.description } : {}),
+      id,
+      name: typeof entry.name === 'string' && entry.name.trim() ? entry.name.trim() : id,
+    }];
+  });
 }

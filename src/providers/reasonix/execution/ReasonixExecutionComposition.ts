@@ -454,9 +454,11 @@ export class ReasonixExecution {
   ): ReasonixAcpDynamicConfig | undefined {
     const modeId = sessionConfig.resolveSelectedModeId();
     const modelId = sessionConfig.resolveSelectedRawModelId(options);
+    const effortLevel = sessionConfig.resolveSelectedEffort();
     const dynamic: ReasonixAcpDynamicConfig = {
       ...(modeId ? { modeId } : {}),
       ...(modelId ? { modelId } : {}),
+      ...(effortLevel ? { effortLevel } : {}),
     };
     return Object.keys(dynamic).length > 0 ? dynamic : undefined;
   }

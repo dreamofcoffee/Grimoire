@@ -52,7 +52,7 @@ Grimoire 將 agentic CLI 助手帶入 Obsidian。Codex、Claude Code、Antigravi
 | Plan mode | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
 | Image attachments | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 否 |
 | Instruction mode | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
-| Reasoning effort controls | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 否 |
+| Reasoning effort controls | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 |
 | Rewind | 否 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 | 否 |
 | Fork | 是 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 | 否 |
 | Provider slash commands | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
@@ -257,6 +257,8 @@ reasonix --version
 執行 `reasonix setup` 設定 model provider 與憑證，然後在 Grimoire 中啟用 Reasonix。別的 provider 只有一項設定的地方，Reasonix 有兩項：session mode（`normal`、`plan`、`goal`）以及獨立的 tool 批准姿態（`ask`、`auto`、`yolo`）。Grimoire 的工具列同時驅動兩者。Safe 是會詢問的 `normal`，Plan 是會詢問的 `plan`，Auto-approve 是處於 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，顯示為 Safe。 由於區分 Safe 與 Auto-approve 的只有批准姿態，無法設定該姿態的 turn 會被拒絕，而不是悄悄以更寬鬆的方式執行。
 
 Reasonix 不只請求權限，也會提問：它的 `ask` tool 經由同一通道抵達，繪製成一張卡片，描述是問題，帶編號的選項是答案。請按編號選擇；在有多個答案的卡片上 `Enter` 不做任何事，習慣性的按鍵不會替你做決定。
+
+推理強度不是固定清單，而是由 session 填充的 picker。模型接受哪些級別由服務它的 provider 區塊決定：宣告了 `supported_efforts` 的區塊提供 Disabled、Low、High 與 Max，未宣告的則取得其類型的內建集合。Grimoire 讀取目前 session 提供的內容，並把 Auto 放在最前，它把選擇權交還給 Reasonix。session 未提供的級別永遠不會被送出，因為 CLI 會對照模型拒絕它。
 
 - [Reasonix 文件](https://reasonix.io/docs/)
 - [GitHub 上的 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)

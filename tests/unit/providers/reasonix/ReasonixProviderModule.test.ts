@@ -130,14 +130,19 @@ describe('Reasonix provider module', () => {
       expect(capabilities.history.ownership).toBe('grimoire-projection');
     });
 
-    it('offers no reasoning control, and no question, and no agents', () => {
-      // The effort lives in the model id; nothing but permissions has been seen
-      // on the permission channel; and the CLI documents no agent file.
-      expect(capabilities.reasoningControl).toEqual({ kind: 'none' });
+    it('drives reasoning effort, and offers no question and no agents', () => {
+      // The tiers here are the union of what any provider block can produce;
+      // what the picker shows is whichever of them the open session offered.
+      // Nothing but permissions has been seen on the permission channel, and
+      // the CLI documents no agent file.
+      expect(capabilities.reasoningControl).toEqual({
+        kind: 'effort',
+        tiers: ['auto', 'disabled', 'enabled', 'low', 'high', 'max'],
+      });
       expect(capabilities.interactions.questions).toBe('unsupported');
       expect(capabilities.agents.definitions).toBe('none');
       expect(capabilities.workspace.agents).toEqual({ inventory: 'none', manager: 'none' });
-      expect(reasonixProviderModule.declarations.chatUI.reasoning).toBeUndefined();
+      expect(reasonixProviderModule.declarations.chatUI.reasoning).toBeDefined();
     });
 
     it('lists commands without a command file to manage', () => {

@@ -31,6 +31,7 @@ import {
   normalizeReasonixModelAliases,
   normalizeReasonixVisibleModels,
   type PersistedReasonixProviderSettings,
+  REASONIX_AUTO_EFFORT,
   type ReasonixProviderSettings,
 } from './settings';
 import { reasonixChatUIConfig } from './ui/ReasonixChatUIConfig';
@@ -60,8 +61,8 @@ import { reasonixChatUIConfig } from './ui/ReasonixChatUIConfig';
  * What Reasonix has and this module does not claim yet, each a separate piece
  * of work rather than an oversight:
  *
- * - **the `effort` config option** (`auto`, `enabled`, `disabled`) is a
- *   thinking switch, not the tiered budget `reasoningControl` models;
+ * - **nothing about reasoning effort.** It is driven: the levels come from
+ *   the session and the choice is applied as a config option;
  * - **`_reasonix.io/session/steer`** would queue guidance mid-turn, and no
  *   provider drives the steering surface;
  * - **`.reasonix/commands/*.md`**, which the CLI reads as slash commands. The
@@ -77,6 +78,7 @@ const KNOWN_SETTINGS_FIELDS = new Set([
   'cliPath',
   'cliPathsByHost',
   'discoveredModelsFingerprint',
+  'effortLevel',
   'enabled',
   'environmentHash',
   'environmentVariables',
@@ -168,7 +170,22 @@ const reasonixCapabilities: ProviderCapabilityDescriptor = {
     compaction: 'native',
   },
   security: { enforcement: 'native' },
-  reasoningControl: { kind: 'none' },
+  /**
+   * **The tiers are the union, and the picker is the session's.**
+   *
+   * Which levels a model takes is decided by the provider block serving it: one
+   * with `supported_efforts` offers `disabled`, `low`, `high`, `max`, one
+   * without gets the built-in set for its kind, `auto`/`enabled`/`disabled`.
+   * This list is every value either can produce, because the descriptor gates
+   * whether a reasoning group is drawn at all; what the group *contains* comes
+   * from `availableEfforts`, discovered per session like the model catalogue.
+   * The CLI refuses a level the model does not take
+   * (`UNSUPPORTED_REASONING_EFFORT`), so nothing unoffered is ever sent.
+   */
+  reasoningControl: {
+    kind: 'effort',
+    tiers: ['auto', 'disabled', 'enabled', 'low', 'high', 'max'],
+  },
   workspace: {
     skills: { inventory: 'managed', manager: 'managed' },
     commands: { inventory: 'managed', manager: 'none', runtimeCommandDiscovery: 'active-session-only' },
@@ -215,6 +232,7 @@ export const reasonixSettingsCodec: ProviderSettingsCodec<ReasonixProviderSettin
       environmentHash: value.environmentHash,
       environmentVariables: value.environmentVariables,
       modelAliases: normalizeReasonixModelAliases(value.modelAliases),
+      effortLevel: value.effortLevel.trim() || REASONIX_AUTO_EFFORT,
       selectedMode: value.selectedMode.trim(),
       visibleModels: [...normalizeReasonixVisibleModels(value.visibleModels)],
     };
@@ -351,6 +369,7 @@ function createDefaultSettings(): ReasonixProviderSettings {
     modelAliases: {},
     visibleModels: [],
     availableModes: [],
+    availableEfforts: [],
     discoveredModels: [],
   };
 }
@@ -374,8 +393,12 @@ function decodeSettings(record: Readonly<Record<string, unknown>>): ReasonixProv
     selectedMode: typeof record.selectedMode === 'string'
       ? record.selectedMode.trim()
       : defaults.selectedMode,
+    effortLevel: typeof record.effortLevel === 'string' && record.effortLevel.trim()
+      ? record.effortLevel.trim()
+      : defaults.effortLevel,
     visibleModels: normalizeReasonixVisibleModels(record.visibleModels),
     availableModes: [],
+    availableEfforts: [],
     discoveredModels: [],
   };
 }
@@ -385,6 +408,7 @@ function validateKnownSettings(record: Readonly<Record<string, unknown>>): strin
   requireType(record, 'enabled', value => typeof value === 'boolean', issues);
   for (const field of [
     'cliPath',
+    'effortLevel',
     'environmentHash',
     'environmentVariables',
     'selectedMode',
@@ -403,7 +427,8 @@ function validateKnownSettings(record: Readonly<Record<string, unknown>>): strin
     && record.visibleModels.some(value => typeof value !== 'string')) {
     issues.push('visibleModels contains an invalid model');
   }
-  if ('discoveredModels' in record || 'availableModes' in record) {
+  if ('discoveredModels' in record || 'availableModes' in record
+    || 'availableEfforts' in record) {
     issues.push('discovery state must not be stored in settings');
   }
   return issues;

@@ -206,6 +206,8 @@ export const REASONIX_PROVIDER_CAPABILITIES: Readonly<ProviderCapabilities> = Ob
   supportsMcpTools: false,
   // `_reasonix.io/session/steer` exists and nothing drives it yet.
   supportsTurnSteer: false,
-  // The `effort` config option is a thinking switch, not a tiered budget.
-  reasoningControl: 'none',
+  // Driven, and discovered per session: which levels a model takes is decided
+  // by the provider block serving it, so the picker is fed from the session's
+  // own `effort` option rather than from a list written here.
+  reasoningControl: 'effort',
 });

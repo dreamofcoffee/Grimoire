@@ -52,7 +52,7 @@ Está diseñado para quienes ya trabajan en Obsidian y quieren ayuda de IA que s
 | Plan mode | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
 | Image attachments | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | No |
 | Instruction mode | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
-| Reasoning effort controls | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | No | No |
+| Reasoning effort controls | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí | No | Sí |
 | Rewind | No | Sí | No | Sí | No | No | No | No | No | No | No |
 | Fork | Sí | Sí | No | Sí | No | No | No | No | No | No | No |
 | Provider slash commands | No | Sí | Sí | Sí | Sí | Sí | No | Sí | Sí | Sí | Sí |
@@ -256,6 +256,8 @@ reasonix --version
 Ejecuta `reasonix setup` para configurar un proveedor de modelos y sus credenciales, y luego activa Reasonix en Grimoire. Reasonix guarda dos ajustes donde otros proveedores guardan uno: el modo de sesión (`normal`, `plan`, `goal`) y una postura de aprobación de herramientas aparte (`ask`, `auto`, `yolo`). La barra de Grimoire controla ambos. Safe es `normal` preguntando, Plan es `plan` preguntando y Auto-approve es `normal` en `yolo`; `goal` es propio de Reasonix y se muestra como Safe. Como la postura es lo único que separa Safe de Auto-approve, un turno que no pueda fijarla se rechaza en lugar de ejecutarse en silencio en la más laxa.
 
 Reasonix también hace preguntas, no solo pide permisos: su herramienta `ask` llega por el mismo canal y se dibuja como una tarjeta cuya descripción es la pregunta y cuyas opciones numeradas son las respuestas. Elige una por su número; `Enter` no hace nada en una tarjeta con varias respuestas, así que una pulsación por costumbre no decide por ti.
+
+El esfuerzo de razonamiento es un selector alimentado por la sesión, no una lista fija. Qué niveles acepta un modelo lo decide el bloque de proveedor que lo sirve: uno que declara `supported_efforts` ofrece Disabled, Low, High y Max; uno sin él recibe el conjunto integrado de su tipo. Grimoire lee lo que ofrece la sesión abierta y pone Auto al frente, lo que deja la elección a Reasonix. Un nivel que la sesión nunca ofreció no se envía nunca, porque la CLI lo rechaza contra el modelo.
 
 - [Documentación de Reasonix](https://reasonix.io/docs/)
 - [Reasonix en GitHub](https://github.com/esengine/DeepSeek-Reasonix)

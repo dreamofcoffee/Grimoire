@@ -10,6 +10,11 @@ import type { ReasonixExecutionDynamicApplier } from './ReasonixExecutionBackend
 export interface ReasonixAcpDynamicConfig {
   readonly modeId?: string;
   readonly modelId?: string;
+  /**
+   * The reasoning level this turn runs at, when the person picked one the
+   * session offers. Absent for `auto`, which is Reasonix's own choice.
+   */
+  readonly effortLevel?: string;
 }
 
 export interface ReasonixAcpDynamicConfigResolver {
@@ -83,6 +88,26 @@ export class ReasonixAcpDynamicConfigApplier implements ReasonixExecutionDynamic
         type: 'select',
         value: config.modelId.trim(),
       });
+    }
+    throwIfAborted(input.signal);
+    // After the model, because the levels a session takes are the *model's*:
+    // set on the previous model, a level the new one refuses fails the turn.
+    // Tolerated rather than strict — an effort the agent will not take leaves
+    // the session on whatever it was thinking at, which is a depth, not a
+    // permission.
+    if (config.effortLevel?.trim()) {
+      try {
+        await input.client.setConfigOption({
+          configId: 'effort',
+          sessionId: input.sessionId,
+          type: 'select',
+          value: config.effortLevel.trim(),
+        });
+      } catch (error) {
+        if (input.signal.aborted) {
+          throw error;
+        }
+      }
     }
     throwIfAborted(input.signal);
     const requested = config.modeId?.trim();

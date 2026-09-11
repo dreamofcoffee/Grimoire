@@ -52,7 +52,7 @@ Grimoire は、すでに Obsidian で作業している人のために作られ�
 | Plan mode | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | Yes |
 | Image attachments | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | No |
 | Instruction mode | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | Yes |
-| Reasoning effort controls | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No |
+| Reasoning effort controls | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes |
 | Rewind | No | Yes | No | Yes | No | No | No | No | No | No | No |
 | Fork | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
 | Provider slash commands | No | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | Yes |
@@ -258,6 +258,8 @@ reasonix --version
 `reasonix setup` を実行して model provider と認証情報を設定し、Grimoire で Reasonix を有効にしてください。Reasonix は他の provider が 1 つ持つ設定を 2 つ持ちます。session mode（`normal`、`plan`、`goal`）と、別立ての tool 承認姿勢（`ask`、`auto`、`yolo`）です。Grimoire のツールバーは両方を操作します。Safe は確認する `normal`、Plan は確認する `plan`、Auto-approve は `yolo` の `normal` です。`goal` は Reasonix 固有で、Safe として表示されます。 Safe と Auto-approve を分けているのは姿勢だけなので、それを設定できなかった turn は、緩いほうで黙って走るのではなく拒否されます。
 
 Reasonix は許可だけでなく質問もします。`ask` tool は同じチャネルで届き、説明が質問、番号付きの選択肢が回答というカードとして描かれます。番号で選んでください。回答が複数あるカードでは `Enter` は何もしないので、習慣的なキー操作があなたの代わりに選ぶことはありません。
+
+reasoning effort は固定リストではなく、session から供給される picker です。どの段階を model が受け取るかは、それを提供する provider ブロックが決めます。`supported_efforts` を宣言したブロックは Disabled、Low、High、Max を、宣言しないブロックはその種類の組み込みセットを提供します。Grimoire は開いている session が提示したものを読み、先頭に Auto を置きます。Auto は判断を Reasonix に委ねる値です。session が提示しなかった段階は決して送られません。CLI が model に対してそれを拒否するからです。
 
 - [Reasonix ドキュメント](https://reasonix.io/docs/)
 - [GitHub 上の Reasonix](https://github.com/esengine/DeepSeek-Reasonix)

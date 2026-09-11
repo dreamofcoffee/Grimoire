@@ -44,6 +44,66 @@ describe('Reasonix dynamic configuration', () => {
     expect(calls).toEqual(trace.cases.dynamicConfiguration);
   });
 
+  it('sets the reasoning level after the model, and only when one was picked', async () => {
+    // After the model, because the levels a session takes belong to the model:
+    // set on the old one, a level the new one refuses would fail the turn.
+    const { client, calls } = createClient();
+    const applier = new ReasonixAcpDynamicConfigApplier({
+      resolve: async () => ({ modelId: 'custom-api-z-ai/glm-5.3', effortLevel: 'high' }),
+    });
+
+    await applier.apply({
+      client,
+      sessionId: 'native-session',
+      dynamicRef: 'opaque-config',
+      signal: new AbortController().signal,
+    });
+
+    expect(calls).toEqual([
+      'set-config:model:custom-api-z-ai/glm-5.3',
+      'set-config:effort:high',
+    ]);
+  });
+
+  it('runs the turn at whatever depth the session kept when the level is refused', async () => {
+    // A depth is not a permission: told no, the turn still runs, where a
+    // refused approval posture stops it.
+    const calls: string[] = [];
+    const client = {
+      setConfigOption: async ({ configId, value }: { configId: string; value: string }) => {
+        calls.push(`set-config:${configId}:${value}`);
+        if (configId === 'effort') {
+          throw new JsonRpcErrorResponse(
+            'session/set_config_option',
+            -32602,
+            'UNSUPPORTED_REASONING_EFFORT',
+          );
+        }
+        return { configOptions: [] };
+      },
+      setMode: async ({ modeId }: { modeId: string }) => {
+        calls.push(`set-mode:${modeId}`);
+        return {};
+      },
+    } as unknown as ManagedAcpClient;
+    const applier = new ReasonixAcpDynamicConfigApplier({
+      resolve: async () => ({ effortLevel: 'max', modeId: 'normal' }),
+    });
+
+    await expect(applier.apply({
+      client,
+      sessionId: 'native-session',
+      dynamicRef: 'opaque-config',
+      signal: new AbortController().signal,
+    })).resolves.toBeUndefined();
+
+    expect(calls).toEqual([
+      'set-config:effort:max',
+      'set-config:tool_approval:ask',
+      'set-mode:normal',
+    ]);
+  });
+
   it('spends Auto-approve on the approval option, not on the session mode', async () => {
     // The whole reason one Grimoire mode is two calls here: Reasonix has no
     // `bypass` mode, and a turn that only set a mode would run Auto-approve in

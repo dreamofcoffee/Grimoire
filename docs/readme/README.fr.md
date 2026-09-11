@@ -52,7 +52,7 @@ Grimoire est conçu pour les personnes qui travaillent déjà dans Obsidian et v
 | Plan mode | Oui | Oui | Oui | Oui | Oui | Oui | Non | Oui | Oui | Oui | Oui |
 | Image attachments | Oui | Oui | Oui | Oui | Oui | Oui | Non | Oui | Oui | Oui | Non |
 | Instruction mode | Oui | Oui | Oui | Oui | Oui | Oui | Non | Oui | Oui | Oui | Oui |
-| Reasoning effort controls | Oui | Oui | Oui | Oui | Oui | Oui | Oui | Oui | Oui | Non | Non |
+| Reasoning effort controls | Oui | Oui | Oui | Oui | Oui | Oui | Oui | Oui | Oui | Non | Oui |
 | Rewind | Non | Oui | Non | Oui | Non | Non | Non | Non | Non | Non | Non |
 | Fork | Oui | Oui | Non | Oui | Non | Non | Non | Non | Non | Non | Non |
 | Provider slash commands | Non | Oui | Oui | Oui | Oui | Oui | Non | Oui | Oui | Oui | Oui |
@@ -258,6 +258,8 @@ reasonix --version
 Lancez `reasonix setup` pour configurer un fournisseur de modèles et ses identifiants, puis activez Reasonix dans Grimoire. Reasonix garde deux réglages là où d'autres providers en gardent un : le mode de session (`normal`, `plan`, `goal`) et une posture d'approbation des tools distincte (`ask`, `auto`, `yolo`). La barre d'outils de Grimoire pilote les deux. Safe, c'est `normal` qui demande, Plan c'est `plan` qui demande, et Auto-approve c'est `normal` en `yolo` ; `goal` appartient à Reasonix et s'affiche comme Safe. Comme la posture est la seule chose qui sépare Safe d'Auto-approve, un tour qui ne peut pas la fixer est refusé plutôt qu'exécuté en silence dans la plus permissive.
 
 Reasonix pose aussi des questions, pas seulement des demandes de permission : son tool `ask` arrive par le même canal et s'affiche comme une carte dont la description est la question et dont les options numérotées sont les réponses. Choisissez par le numéro ; `Entrée` ne fait rien sur une carte à plusieurs réponses, pour qu'une frappe machinale ne choisisse pas à votre place.
+
+L'effort de raisonnement est un sélecteur alimenté par la session, pas une liste figée. Quels niveaux un modèle accepte est décidé par le bloc provider qui le sert : un bloc déclarant `supported_efforts` offre Disabled, Low, High et Max ; un bloc sans reçoit le jeu intégré de son type. Grimoire lit ce que la session ouverte propose et place Auto en tête, ce qui laisse le choix à Reasonix. Un niveau que la session n'a jamais proposé n'est jamais envoyé, car la CLI le refuse face au modèle.
 
 - [Documentation Reasonix](https://reasonix.io/docs/)
 - [Reasonix sur GitHub](https://github.com/esengine/DeepSeek-Reasonix)

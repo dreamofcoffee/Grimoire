@@ -50,7 +50,7 @@ It's built for people who already work in Obsidian and want AI help that behaves
 | Plan mode | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | Yes |
 | Image attachments | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | No |
 | Instruction mode | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | Yes |
-| Reasoning effort controls | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No |
+| Reasoning effort controls | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes |
 | Rewind | No | Yes | No | Yes | No | No | No | No | No | No | No |
 | Fork | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
 | Provider slash commands | No | Yes | Yes | Yes | Yes | Yes | No | Yes | Yes | Yes | Yes |
@@ -259,6 +259,8 @@ reasonix --version
 Run `reasonix setup` to configure a model provider and its credentials, then enable Reasonix in Grimoire. Reasonix keeps two settings where other providers keep one: the session mode (`normal`, `plan`, `goal`) and a separate tool-approval posture (`ask`, `auto`, `yolo`). Grimoire's toolbar drives both. Safe is `normal` asking, Plan is `plan` asking, and Auto-approve is `normal` on `yolo`; `goal` is Reasonix's own and reads as Safe. Because the posture is the only thing separating Safe from Auto-approve, a turn that cannot set it is refused rather than run quietly in the looser one.
 
 Reasonix also asks questions, not only permissions: its `ask` tool arrives on the same channel and is drawn as a card whose description is the question and whose numbered options are the answers. Pick one by its number; `Enter` does nothing on a card with several answers, so a habitual keypress cannot choose for you.
+
+Reasoning effort is a picker fed by the session, not a fixed list. Which levels a model takes is decided by the provider block that serves it: one declaring `supported_efforts` offers Disabled, Low, High and Max, one without gets its kind's built-in set. Grimoire reads whatever the open session offers and puts Auto at the head, which leaves the choice to Reasonix. A level the session never offered is never sent, because the CLI refuses it against the model.
 
 - [Reasonix documentation](https://reasonix.io/docs/)
 - [Reasonix on GitHub](https://github.com/esengine/DeepSeek-Reasonix)

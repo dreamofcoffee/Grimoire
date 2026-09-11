@@ -105,7 +105,8 @@ Current boundaries:
 
 - Authentication and model configuration are `reasonix setup` and `~/.reasonix/config.toml`; API keys are named by `api_key_env` and read from the environment.
 - Skills are read from `.reasonix/skills` and `.agents/skills`. `.reasonix/commands/*.md` are slash commands the CLI reads and Grimoire does not manage; the session announces whatever they define.
-- Not driven yet, each a separate piece of work: the `effort` config option (a thinking switch, not a tiered budget), `_reasonix.io/session/steer`, and image attachments the handshake declares unsupported.
+- Reasoning effort is driven, and discovered: the levels a model takes come from the session's `effort` config option, because the provider block serving the model decides them. The picker heads them with `auto`, and a level the session did not offer is never sent.
+- Not driven yet, each a separate piece of work: `_reasonix.io/session/steer`, and image attachments the handshake declares unsupported.
 - Plan indicators are spend-only, and a turn is priced only when the configured model provider has a price.
 
 ## Other Candidates
