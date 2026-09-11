@@ -52,7 +52,7 @@ git reset --hard
 
 The plugin shell is provider-neutral. Provider adapters wrap external tools such as
 Codex, Claude Code, OpenCode, MiMoCode, Kimi Code, Qwen Code, Antigravity CLI, Grok Build,
-and Devin.
+Devin, and Reasonix.
 
 - Put shared runtime, provider, security, storage, and tool contracts in `src/core/`
   only when at least two providers use the behavior.

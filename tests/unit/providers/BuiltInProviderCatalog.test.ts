@@ -4,7 +4,7 @@ import { builtInProviderCatalog } from '@/providers/BuiltInProviderCatalog';
  * Constructing the catalog is the assertion.
  *
  * Every rule in `ProviderCatalog` runs at construction, so importing this file
- * already proves the ten shipped modules agree with themselves and with each
+ * already proves the eleven shipped modules agree with themselves and with each
  * other. What is left to state here is the product-visible consequence.
  */
 describe('built-in provider catalog', () => {
@@ -20,6 +20,7 @@ describe('built-in provider catalog', () => {
       'mimocode',
       'opencode',
       'qwen',
+      'reasonix',
     ]);
   });
 
@@ -40,6 +41,7 @@ describe('built-in provider catalog', () => {
       'gemini',
       'qwen',
       'devin',
+      'reasonix',
     ]);
   });
 
@@ -143,6 +145,7 @@ describe('built-in provider catalog', () => {
       'Gemini CLI (Legacy)',
       'Qwen Code',
       'Devin',
+      'Reasonix',
     ]);
   });
 });

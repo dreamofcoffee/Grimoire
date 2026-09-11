@@ -29,7 +29,7 @@
 
 > **안내: 2.0을 개발 중입니다.** 다음 메이저 릴리스에서 Grimoire는 프로바이더 기반 실행 아키텍처로 전환됩니다. 하나의 커널이 각 CLI를 구동하고 턴마다 정확히 하나의 결과를 기록하며, 보관소의 테마와 강조 색상을 따르는 새 디자인이 적용됩니다. 작업은 이미 `main`에 병합되었지만 아직 공개 릴리스에는 포함되지 않았습니다. 현재 공개 릴리스는 여전히 1.3.2입니다. 대화, 설정, 프로바이더 파일은 그대로 유지됩니다.
 
-Grimoire는 에이전트형 CLI 어시스턴트를 Obsidian 안으로 가져옵니다. 하나의 사이드 패널에서 Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin을 사용해 노트를 읽고, 파일을 편집하고, 명령과 도구를 실행하며 실제 볼트의 세션 기록을 유지합니다. Grimoire 서버, 텔레메트리, 호스팅 백엔드, 프록시는 없습니다.
+Grimoire는 에이전트형 CLI 어시스턴트를 Obsidian 안으로 가져옵니다. 하나의 사이드 패널에서 Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin, Reasonix를 사용해 노트를 읽고, 파일을 편집하고, 명령과 도구를 실행하며 실제 볼트의 세션 기록을 유지합니다. Grimoire 서버, 텔레메트리, 호스팅 백엔드, 프록시는 없습니다.
 
 이미 Obsidian에서 작업하며 볼트의 일부처럼 작동하는 AI 도움을 원하는 사람을 위해 만들었습니다. 로컬 컨텍스트와 파일, 신중하게 선택한 제공자, 확인 가능한 사용량을 제공합니다.
 
@@ -38,25 +38,25 @@ Grimoire는 에이전트형 CLI 어시스턴트를 Obsidian 안으로 가져옵�
 ## Grimoire를 선택하는 이유
 
 - 이미 신뢰하는 CLI 에이전트를 노트 안에서 바로 사용하세요.
-- 작성기에서 제공자를 전환하세요. Codex, Claude Code, Antigravity CLI, 레거시 Gemini CLI, OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin은 하나의 모델 선택기를 공유합니다.
+- 작성기에서 제공자를 전환하세요. Codex, Claude Code, Antigravity CLI, 레거시 Gemini CLI, OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin, Reasonix는 하나의 모델 선택기를 공유합니다.
 - 모든 대화를 볼트에 기반하게 하세요. 경로를 직접 붙여 넣는 대신 노트, 폴더, MCP 도구를 멘션하세요.
 - 어차피 선택하는 자리인 모델 선택기 옆에서 비용과 한도를 확인하세요.
 - 로컬 우선으로 유지하세요. Grimoire는 텔레메트리를 수집하거나 프롬프트를 프록시하지 않으며, 백엔드를 운영하지 않습니다.
 
 ## 제공자별 기능
 
-| 기능 | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI (Legacy) | Qwen Code | Devin |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 로컬 영속 런타임 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 |
-| 네이티브 기록 복원 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 아니요 | 아니요 |
-| 계획 모드 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 |
-| 이미지 첨부 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 |
-| 지시 모드 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 |
-| 추론 강도 제어 | 예 | 예 | 예 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 |
-| 되돌리기 | 아니요 | 예 | 아니요 | 예 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 |
-| 포크 | 예 | 예 | 아니요 | 예 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 |
-| 제공자 슬래시 명령 | 아니요 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 |
-| Grimoire 관리 MCP UI | 아니요 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 |
+| 기능 | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI (Legacy) | Qwen Code | Devin | Reasonix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 로컬 영속 런타임 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 | 예 |
+| 네이티브 기록 복원 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 아니요 | 아니요 | 아니요 |
+| 계획 모드 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 | 예 |
+| 이미지 첨부 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 | 아니요 |
+| 지시 모드 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 | 예 |
+| 추론 강도 제어 | 예 | 예 | 예 | 예 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 |
+| 되돌리기 | 아니요 | 예 | 아니요 | 예 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 |
+| 포크 | 예 | 예 | 아니요 | 예 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 | 아니요 |
+| 제공자 슬래시 명령 | 아니요 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 | 예 |
+| Grimoire 관리 MCP UI | 아니요 | 예 | 예 | 예 | 예 | 예 | 아니요 | 예 | 예 | 예 | 예 |
 
 ## 설치
 
@@ -244,6 +244,34 @@ Safe 모드에 대해 알아둘 점이 있습니다. Devin은 어떤 셸 명령�
 Devin은 자격 증명을 `~/.local/share/devin/`에서 직접 관리합니다. 볼트 스킬은 `.devin/skills`와 `.agents/skills`에서 읽으며, 스킬이 곧 Devin의 슬래시 명령입니다. Grimoire는 `.grimoire/mcp/devin.json`에 별도의 MCP 목록을 두고 ACP 세션에 주입합니다. 사용량은 Devin이 보고할 때 표시됩니다. 추론 강도 제어는 없습니다. 강도가 모델 id의 일부이기 때문입니다. Grimoire의 포크와 되돌리기는 지원하지 않습니다.
 
 
+### Reasonix
+
+Reasonix는 오픈 소스 멀티 모델 코딩 에이전트이며, 여기서는 선택형 ACP 제공자입니다. Grimoire는 `reasonix acp`를 실행해 실행 중인 세션에서 모델과 모드를 읽고, 메시지·사고·도구 활동·계획을 스트리밍하며, 권한이 필요한 도구와 파일 쓰기 전에 묻고, 세션을 네이티브로 재개합니다. 세션이 제공하는 모델은 Reasonix 설정의 공급자 블록에 달려 있습니다. 이는 Reasonix의 방식이지 Grimoire의 제한이 아닙니다.
+
+```bash
+# npm
+npm i -g reasonix
+
+# Homebrew
+brew install esengine/reasonix/reasonix
+
+reasonix setup
+reasonix --version
+```
+
+`reasonix setup`으로 모델 공급자와 자격 증명을 설정한 뒤 Grimoire에서 Reasonix를 켜세요. Reasonix는 다른 제공자가 하나만 두는 설정을 둘로 나눕니다. 세션 모드(`normal`, `plan`, `goal`)와 별도의 도구 승인 태도(`ask`, `auto`, `yolo`)입니다. Grimoire 툴바가 둘 다 조작합니다. Safe는 묻는 `normal`, Plan은 묻는 `plan`, Auto-approve는 `yolo` 상태의 `normal`입니다. `goal`은 Reasonix 고유이며 Safe로 표시됩니다. Safe와 Auto-approve를 가르는 것은 태도뿐이므로, 그것을 설정하지 못한 턴은 더 느슨한 쪽에서 조용히 실행되는 대신 거부됩니다.
+
+Reasonix는 권한만이 아니라 질문도 합니다. `ask` 도구는 같은 채널로 도착하며, 설명이 질문이고 번호가 붙은 선택지가 답인 카드로 그려집니다. 번호로 고르세요. 답이 여러 개인 카드에서는 `Enter`가 아무 일도 하지 않으므로 습관적인 키 입력이 대신 선택하지 않습니다.
+
+추론 강도는 고정 목록이 아니라 세션이 채우는 선택기입니다. 어떤 단계를 모델이 받아들이는지는 그 모델을 제공하는 공급자 블록이 정합니다. `supported_efforts`를 선언한 블록은 Disabled, Low, High, Max를 제공하고, 선언하지 않은 블록은 해당 종류의 기본 집합을 받습니다. Grimoire는 열린 세션이 제시한 것을 읽고 맨 앞에 Auto를 둡니다. Auto는 선택을 Reasonix에 맡기는 값입니다. 세션이 제시하지 않은 단계는 절대 전송되지 않습니다. CLI가 모델에 대해 그것을 거부하기 때문입니다.
+
+- [Reasonix 문서](https://reasonix.io/docs/)
+- [GitHub의 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)
+
+Safe 모드에 대해 알아둘 점이 하나 있습니다. `ask`는 Reasonix가 권한 대상으로 분류한 도구만 막고 모든 도구를 막지는 않으므로, 읽기 전용으로 판단한 셸 명령은 묻지 않고 실행됩니다. Grimoire는 Reasonix가 프로토콜로 수행하는 모든 파일 쓰기를 승인 대상으로 두며, 그것이 볼트를 질문 뒤에 두는 장치입니다. 아무것도 쓰면 안 되는 세션에는 Plan을 사용하세요.
+
+Reasonix는 설정을 `~/.reasonix/config.toml`에 두고, API 키는 그 파일이 지정한 이름으로 환경에서 읽습니다. 볼트 스킬은 `.reasonix/skills`와 `.agents/skills`에서 읽습니다. Grimoire는 `.grimoire/mcp/reasonix.json`에 별도의 프로젝트 MCP 목록을 관리하고 ACP 세션에 주입합니다. 사용량은 Reasonix 자체 상태 알림에서 오며, 비용은 모델 공급자에 가격이 있을 때만 표시됩니다. 이미지 첨부, 추론 강도 제어, 포크, 되감기는 지원하지 않습니다.
+
 ### OpenCode
 
 자체 제공자 구성을 갖춘 모델 불문 에이전트가 필요하면 OpenCode를 선택하세요.
@@ -338,7 +366,7 @@ Grimoire에서 Grok Build는 `.grimoire/grok/` 아래의 Grimoire 관리 시작 
 
 ### 모델 선택기
 
-하나의 선택기에 제공자별로 그룹화하고 레이블 순으로 정렬합니다. Antigravity, Claude Code, Codex, Devin, Gemini CLI (Legacy), Grok Build, Kimi Code, MiMoCode, OpenCode, Qwen Code가 포함됩니다. 필터링 중에도 메뉴 크기를 바꾸지 않고 레이블, 설명, 그룹, 모델 ID 전체에서 검색합니다. 카탈로그는 지연 로드되며 접은 그룹을 기억합니다. 설정에서 사용자 지정 별칭과 컨텍스트 창 재정의를 추가하세요. Claude의 1M 변형은 기본 모델을 대체하는 것이 아니라 추가 옵션입니다.
+하나의 선택기에 제공자별로 그룹화하고 레이블 순으로 정렬합니다. Antigravity, Claude Code, Codex, Devin, Gemini CLI (Legacy), Grok Build, Kimi Code, MiMoCode, OpenCode, Qwen Code, Reasonix가 포함됩니다. 필터링 중에도 메뉴 크기를 바꾸지 않고 레이블, 설명, 그룹, 모델 ID 전체에서 검색합니다. 카탈로그는 지연 로드되며 접은 그룹을 기억합니다. 설정에서 사용자 지정 별칭과 컨텍스트 창 재정의를 추가하세요. Claude의 1M 변형은 기본 모델을 대체하는 것이 아니라 추가 옵션입니다.
 
 ### 사용량 및 비용
 
@@ -352,6 +380,7 @@ Grimoire에서 Grok Build는 `.grimoire/grok/` 아래의 Grimoire 관리 시작 
 | Gemini CLI (Legacy) | Gemini CLI가 보고할 때의 ACP 비용 메타데이터, 레거시 제공자 전용 |
 | Qwen Code | Qwen Code가 보고할 때의 ACP 토큰 및 비용 메타데이터 |
 | Devin | ACP가 보고하는 세션 크레딧 합계를 월간 지출로 |
+| Reasonix | 자체 상태 알림이 보고하는 턴당 비용. 설정한 모델 공급자에 가격이 있을 때만 |
 | OpenCode | ACP 및 세션 비용 메타데이터에서 집계한 월간 지출 |
 | MiMoCode | ACP 및 세션 비용 메타데이터에서 집계한 월간 지출 |
 | Kimi Code | ACP 및 세션 비용 메타데이터에서 집계한 월간 지출 |
@@ -463,7 +492,7 @@ Obsidian 커뮤니티 플러그인은 권장되는 사용자 설치 경로입니
 
 ## 로드맵
 
-현재 Grimoire는 Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin과 함께 제공됩니다.
+현재 Grimoire는 Codex, Claude Code, Antigravity CLI, Gemini CLI (Legacy), OpenCode, MiMoCode, Kimi Code, Grok Build, Qwen Code, Devin, Reasonix와 함께 제공됩니다.
 
 다음 후보는 GitHub Copilot CLI, 추가 ACP 호환 제공자, Obsidian에 임베드할 만큼 안정적인 로컬 모델 CLI입니다. 구현 메모는 [제공자 로드맵](../provider-roadmap.md)에 있습니다.
 

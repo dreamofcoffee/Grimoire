@@ -25,6 +25,7 @@ import { KimicodeExecution } from '@/providers/kimicode/execution/KimicodeExecut
 import { MimocodeExecution } from '@/providers/mimocode/execution/MimocodeExecutionComposition';
 import { OpencodeExecution } from '@/providers/opencode/execution/OpencodeExecutionComposition';
 import { QwenExecution } from '@/providers/qwen/execution/QwenExecutionComposition';
+import { ReasonixExecution } from '@/providers/reasonix/execution/ReasonixExecutionComposition';
 import type {
   ProviderWorkspaceServices,
 } from '@/providers/shared/providerHostContracts';
@@ -141,6 +142,7 @@ export class ApplicationRuntime {
   readonly gemini: GeminiExecution;
   readonly qwen: QwenExecution;
   readonly devin: DevinExecution;
+  readonly reasonix: ReasonixExecution;
 
   constructor(private readonly options: ApplicationRuntimeOptions) {
     const { plugin } = options;
@@ -190,11 +192,13 @@ export class ApplicationRuntime {
     this.kernel.registerBackend(this.qwen.createBackendRegistration());
     this.devin = new DevinExecution(plugin, registry);
     this.kernel.registerBackend(this.devin.createBackendRegistration());
+    this.reasonix = new ReasonixExecution(plugin, registry);
+    this.kernel.registerBackend(this.reasonix.createBackendRegistration());
 
-    // **Absent means unsupported**, and four providers are absent: Antigravity
-    // runs in print mode, and Gemini, Qwen and Devin have never had auxiliary
-    // execution. They shipped three no-op services each instead of saying so,
-    // which is a failure the UI could not tell from a real one.
+    // **Absent means unsupported**, and five providers are absent: Antigravity
+    // runs in print mode, and Gemini, Qwen, Devin and Reasonix have never had
+    // auxiliary execution. They shipped three no-op services each instead of
+    // saying so, which is a failure the UI could not tell from a real one.
     this.auxiliary = new AuxiliaryExecutionOwner({
       resolveTitleProviderId: () => options.resolveTitleProviderId(),
       sources: new Map([
@@ -365,6 +369,7 @@ export class ApplicationRuntime {
       case 'claude': return this.claude;
       case 'codex': return this.codex;
       case 'devin': return this.devin;
+      case 'reasonix': return this.reasonix;
       case 'gemini': return this.gemini;
       case 'grok': return this.grok;
       case 'kimicode': return this.kimicode;
@@ -600,6 +605,7 @@ export class ApplicationRuntime {
     this.gemini.dispose();
     this.qwen.dispose();
     this.devin.dispose();
+    this.reasonix.dispose();
     this.chat.dispose();
     void this.kernel.dispose();
   }

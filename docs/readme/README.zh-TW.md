@@ -29,7 +29,7 @@
 
 > **提示：2.0 正在開發中。** 下一個主要版本會把 Grimoire 遷移到以提供者為基礎的執行架構：由一個核心驅動每個 CLI，並為每一輪精確記錄一個結果；同時帶來跟隨儲存庫主題與強調色的全新設計。相關工作已合併到 `main` 分支，但尚未納入任何已發布版本。目前發布版本仍是 1.3.2。對話、設定與提供者檔案將原樣保留。
 
-Grimoire 將 agentic CLI 助手帶入 Obsidian。Codex、Claude Code、Antigravity CLI、Gemini CLI (Legacy)、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code 和 Devin 都在同一個側邊欄中執行：讀取筆記、編輯檔案、執行命令、呼叫工具，並把 session history 保存在真實的 vault context 中。Grimoire 不經過自家伺服器：沒有 telemetry、沒有 hosted backend，也沒有夾在你和 provider 之間的 proxy。
+Grimoire 將 agentic CLI 助手帶入 Obsidian。Codex、Claude Code、Antigravity CLI、Gemini CLI (Legacy)、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code、Devin 和 Reasonix 都在同一個側邊欄中執行：讀取筆記、編輯檔案、執行命令、呼叫工具，並把 session history 保存在真實的 vault context 中。Grimoire 不經過自家伺服器：沒有 telemetry、沒有 hosted backend，也沒有夾在你和 provider 之間的 proxy。
 
 它面向已經在 Obsidian 中工作的人：你可以使用本地 context、本地檔案、明確選擇的 provider，並在介面中直接看到 usage 和 cost。
 
@@ -38,25 +38,25 @@ Grimoire 將 agentic CLI 助手帶入 Obsidian。Codex、Claude Code、Antigravi
 ## 為什麼選擇 Grimoire
 
 - 在筆記中直接使用你已經信任的 CLI 代理。
-- 從 composer 切換 provider。Codex、Claude Code、Antigravity CLI、Gemini CLI (Legacy)、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code 和 Devin 共用一個 model picker。
+- 從 composer 切換 provider。Codex、Claude Code、Antigravity CLI、Gemini CLI (Legacy)、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code、Devin 和 Reasonix 共用一個 model picker。
 - 讓每一次 turn 都基於 vault context。可以 mention 筆記、資料夾和 MCP tools，不需要手動複製路徑。
 - 在選擇模型的位置直接看到 cost 和 limits。
 - 保持 local-first。Grimoire 不收集 telemetry，不 proxy prompts，也不執行 backend。
 
 ## 各 provider 能做什麼
 
-| 能力 | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI (Legacy) | Qwen Code | Devin |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 本地 persistent runtime | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
-| 原生 history hydration | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 否 | 否 |
-| Plan mode | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
-| Image attachments | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
-| Instruction mode | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
-| Reasoning effort controls | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 |
-| Rewind | 否 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 |
-| Fork | 是 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 |
-| Provider slash commands | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
-| Grimoire-managed MCP UI | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 |
+| 能力 | Codex | Claude Code | OpenCode | Grok Build | MiMoCode | Kimi Code | Antigravity CLI | Gemini CLI (Legacy) | Qwen Code | Devin | Reasonix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 本地 persistent runtime | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
+| 原生 history hydration | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 否 | 否 | 否 |
+| Plan mode | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
+| Image attachments | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 否 |
+| Instruction mode | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
+| Reasoning effort controls | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 是 | 否 | 是 |
+| Rewind | 否 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 | 否 |
+| Fork | 是 | 是 | 否 | 是 | 否 | 否 | 否 | 否 | 否 | 否 | 否 |
+| Provider slash commands | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
+| Grimoire-managed MCP UI | 否 | 是 | 是 | 是 | 是 | 是 | 否 | 是 | 是 | 是 | 是 |
 
 ## 安裝
 
@@ -239,6 +239,34 @@ devin --version
 Devin 的憑證由它自己保管在 `~/.local/share/devin/`。Vault skills 從 `.devin/skills` 與 `.agents/skills` 讀取，而 skill 就是 Devin 的 slash command。Grimoire 在 `.grimoire/mcp/devin.json` 維護獨立的 MCP 清單並注入 ACP session。用量會在 Devin 回報時顯示；沒有 reasoning effort 控制，因為 effort 已包含在 model id 中。Grimoire 的 fork 與 rewind 不適用於 Devin。
 
 
+### Reasonix
+
+Reasonix 是開源的多模型 coding agent，在這裡是可選啟用的 ACP provider。Grimoire 會啟動 `reasonix acp`，從執行中的 session 讀取 models 與 modes，串流訊息、思考、tool activity 與 plan，在需要授權的 tool 和檔案寫入前詢問，並原生恢復 session。session 提供哪些 models 取決於你的 Reasonix 設定中的 provider 區塊；這屬於 Reasonix，而不是 Grimoire 的限制。
+
+```bash
+# npm
+npm i -g reasonix
+
+# Homebrew
+brew install esengine/reasonix/reasonix
+
+reasonix setup
+reasonix --version
+```
+
+執行 `reasonix setup` 設定 model provider 與憑證，然後在 Grimoire 中啟用 Reasonix。別的 provider 只有一項設定的地方，Reasonix 有兩項：session mode（`normal`、`plan`、`goal`）以及獨立的 tool 批准姿態（`ask`、`auto`、`yolo`）。Grimoire 的工具列同時驅動兩者。Safe 是會詢問的 `normal`，Plan 是會詢問的 `plan`，Auto-approve 是處於 `yolo` 的 `normal`；`goal` 是 Reasonix 自有的模式，顯示為 Safe。 由於區分 Safe 與 Auto-approve 的只有批准姿態，無法設定該姿態的 turn 會被拒絕，而不是悄悄以更寬鬆的方式執行。
+
+Reasonix 不只請求權限，也會提問：它的 `ask` tool 經由同一通道抵達，繪製成一張卡片，描述是問題，帶編號的選項是答案。請按編號選擇；在有多個答案的卡片上 `Enter` 不做任何事，習慣性的按鍵不會替你做決定。
+
+推理強度不是固定清單，而是由 session 填充的 picker。模型接受哪些級別由服務它的 provider 區塊決定：宣告了 `supported_efforts` 的區塊提供 Disabled、Low、High 與 Max，未宣告的則取得其類型的內建集合。Grimoire 讀取目前 session 提供的內容，並把 Auto 放在最前，它把選擇權交還給 Reasonix。session 未提供的級別永遠不會被送出，因為 CLI 會對照模型拒絕它。
+
+- [Reasonix 文件](https://reasonix.io/docs/)
+- [GitHub 上的 Reasonix](https://github.com/esengine/DeepSeek-Reasonix)
+
+關於 Safe 模式有一點要知道：`ask` 只擋下 Reasonix 判定為需要授權的 tool，而不是全部 tool，因此它認為 read-only 的 shell command 會直接執行而不詢問。Grimoire 會對 Reasonix 透過協定進行的每一次檔案寫入進行確認，這正是讓 vault 待在一個問題之後的機制。如果某個 session 完全不該寫入，請使用 Plan。
+
+Reasonix 的設定放在 `~/.reasonix/config.toml`，API keys 依該檔案給出的名稱從環境變數讀取。Vault skills 從 `.reasonix/skills` 與 `.agents/skills` 讀取。Grimoire 在 `.grimoire/mcp/reasonix.json` 維護獨立的專案 MCP 清單，並注入 ACP session。用量來自 Reasonix 自身的 status notification；只有當你的 model provider 有價格時才會顯示 cost。圖片附件、reasoning effort 控制、fork 與 rewind 都不支援。
+
 ### OpenCode
 
 如果你想使用自帶 provider configuration 的 model-agnostic agent，可以選擇 OpenCode。
@@ -333,7 +361,7 @@ Grok 4.5 目前是 Grok Build 的預設模型。Grimoire 從已驗證的 Grok CL
 
 ### Model selector
 
-一個 picker，按 provider 分組，並按 label 排序：Antigravity、Claude Code、Codex、Devin、Gemini CLI (Legacy)、Grok Build、Kimi Code、MiMoCode、OpenCode 和 Qwen Code。Search 會匹配 labels、descriptions、groups 和 model IDs。Catalogs 會 lazy load，並記住你摺疊過的 groups。你可以在 settings 中新增 custom aliases 和 context-window overrides。Claude 的 1M variants 是額外 options，不會替代 base models。
+一個 picker，按 provider 分組，並按 label 排序：Antigravity、Claude Code、Codex、Devin、Gemini CLI (Legacy)、Grok Build、Kimi Code、MiMoCode、OpenCode、Qwen Code 和 Reasonix。Search 會匹配 labels、descriptions、groups 和 model IDs。Catalogs 會 lazy load，並記住你摺疊過的 groups。你可以在 settings 中新增 custom aliases 和 context-window overrides。Claude 的 1M variants 是額外 options，不會替代 base models。
 
 ### Usage 和 cost
 
@@ -347,6 +375,7 @@ Model selector 旁邊的 badge 會持續顯示目前 provider 的 usage；model 
 | Gemini CLI (Legacy) | Gemini CLI 回傳時的 ACP cost metadata；僅 legacy provider |
 | Qwen Code | 僅在 Qwen Code 回傳時的 ACP token 和 cost metadata |
 | Devin | ACP 回報的 session credit 總額，換算為每月支出 |
+| Reasonix | 來自自有 status notification 的每輪 cost，前提是所設定的 model provider 有價格 |
 | OpenCode | 從 ACP 和 session cost metadata 聚合的 monthly spend |
 | MiMoCode | 從 ACP 和 session cost metadata 聚合的 monthly spend |
 | Kimi Code | 從 ACP 和 session cost metadata 聚合的 monthly spend |
@@ -454,7 +483,7 @@ Obsidian Community plugins 是推薦的使用者安裝方式。GitHub Releases �
 
 ## Roadmap
 
-目前 Grimoire 隨 Codex、Claude Code、Antigravity CLI、Gemini CLI (Legacy)、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code 和 Devin 一起發布。
+目前 Grimoire 隨 Codex、Claude Code、Antigravity CLI、Gemini CLI (Legacy)、OpenCode、MiMoCode、Kimi Code、Grok Build、Qwen Code、Devin 和 Reasonix 一起發布。
 
 下一步計畫：GitHub Copilot CLI、其他 ACP-compatible providers，以及當 runtime 足夠穩定可嵌入 Obsidian 時的 local model CLIs。Implementation notes 位於 [docs/provider-roadmap.md](../provider-roadmap.md)。
 

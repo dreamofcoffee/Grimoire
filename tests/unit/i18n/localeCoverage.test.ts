@@ -38,6 +38,7 @@ const SHARED_WITH_ENGLISH = new Set([
   'settings.hiddenSlashCommands.placeholder',
   'settings.providerTabs.qwen.hiddenCommands.placeholder',
   'settings.providerTabs.devin.hiddenCommands.placeholder',
+  'settings.providerTabs.reasonix.hiddenCommands.placeholder',
   'settings.subagents.modal.namePlaceholder',
   'settings.customModelAliases.placeholder',
   'settings.agentEditor.namePlaceholder',

@@ -15,6 +15,7 @@ import { kimicodeWorkspaceRegistration } from './kimicode/app/KimicodeWorkspaceS
 import { mimocodeWorkspaceRegistration } from './mimocode/app/MimocodeWorkspaceServices';
 import { opencodeWorkspaceRegistration } from './opencode/app/OpencodeWorkspaceServices';
 import { qwenWorkspaceRegistration } from './qwen/app/QwenWorkspaceServices';
+import { reasonixWorkspaceRegistration } from './reasonix/app/ReasonixWorkspaceServices';
 
 /**
  * How each built-in provider builds its workspace services.
@@ -40,6 +41,7 @@ export const builtInWorkspaceInitializers: Readonly<Record<
   mimocode: context => mimocodeWorkspaceRegistration.initialize(context),
   opencode: context => opencodeWorkspaceRegistration.initialize(context),
   qwen: context => qwenWorkspaceRegistration.initialize(context),
+  reasonix: context => reasonixWorkspaceRegistration.initialize(context),
 };
 
 let builtInProvidersRegistered = false;

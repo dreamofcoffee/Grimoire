@@ -84,4 +84,17 @@ record('ACP wire recordings', () => {
     expect((recording.exchange as unknown[]).length).toBeGreaterThan(1);
     expect(recording.recordedAgainst).toMatch(/\d+\.\d+/);
   });
+
+  // Reasonix (#180): a subcommand, like wave 6 and Devin.
+  it('records what Reasonix answers', async () => {
+    const recording = await recordAcpWire({
+      providerId: 'reasonix',
+      command: process.env.GRIMOIRE_REASONIX_CLI ?? 'reasonix',
+      args: ['acp'],
+      transport: 'stdio JSON-RPC 2.0 (`reasonix acp`)',
+    });
+
+    expect((recording.exchange as unknown[]).length).toBeGreaterThan(1);
+    expect(recording.recordedAgainst).toMatch(/\d+\.\d+/);
+  });
 });

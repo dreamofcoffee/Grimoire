@@ -16,6 +16,7 @@ import { KimicodeContentPresenter } from '@/providers/kimicode/execution/Kimicod
 import { MimocodeContentPresenter } from '@/providers/mimocode/execution/MimocodeContentPresenter';
 import { OpencodeContentPresenter } from '@/providers/opencode/execution/OpencodeContentPresenter';
 import { QwenContentPresenter } from '@/providers/qwen/execution/QwenContentPresenter';
+import { ReasonixContentPresenter } from '@/providers/reasonix/execution/ReasonixContentPresenter';
 
 /**
  * What the providers actually send, against what the code models.
@@ -124,6 +125,16 @@ const UNMODELLED_BY_PROVIDER: Readonly<Record<string, readonly string[]>> = {
    * The normalizer already knows `session_info_update` from Kimi Code's fork.
    */
   devin: [],
+  /**
+   * Reasonix's three, all drawn from.
+   *
+   * Short because the recording is: a turn that answered "ok" needs no tool.
+   * The vocabulary that matters most for this provider is not here at all —
+   * `_reasonix.io/session/status_update` is not a `session/update`, so it is
+   * counted under `serverMethodsObserved` and read by
+   * `ReasonixSessionNotifications` rather than by the normalizer.
+   */
+  reasonix: [],
 };
 
 /**
@@ -139,7 +150,7 @@ const UNMODELLED_BY_PROVIDER: Readonly<Record<string, readonly string[]>> = {
  * with a vocabulary into a failure rather than a silence.
  */
 const SESSION_UPDATE_REPLAYS: readonly string[] = [
-  'devin', 'gemini', 'grok', 'kimicode', 'mimocode', 'opencode', 'qwen',
+  'devin', 'gemini', 'grok', 'kimicode', 'mimocode', 'opencode', 'qwen', 'reasonix',
 ];
 
 /**
@@ -219,7 +230,7 @@ describe('wire vocabulary coverage', () => {
     expect(recordings.map(recording => recording.providerId).sort())
       .toEqual([
         'antigravity', 'claude', 'codex', 'devin', 'gemini', 'grok', 'kimicode', 'mimocode',
-        'opencode', 'qwen',
+        'opencode', 'qwen', 'reasonix',
       ]);
   });
 
@@ -429,6 +440,33 @@ describe('wire vocabulary coverage', () => {
     const missing = observed.filter(update => !consumed.has(update)).sort();
 
     expect(missing).toEqual([...UNMODELLED_BY_PROVIDER.devin].sort());
+  });
+
+  it('records every Reasonix session update nothing draws the surface from', () => {
+    const recording = recordings.find(entry => entry.providerId === 'reasonix');
+    const observed = recording?.sessionUpdatesObserved ?? [];
+    const consumed = new Set<string>(
+      readAcpSessionUpdates(recording).flatMap(notification => {
+        const effects: string[] = [];
+        const presenter = new ReasonixContentPresenter({
+          displayModel: () => 'model',
+          onCommands: () => effects.push('commands'),
+          onConfigOptions: () => effects.push('config'),
+          onCost: () => effects.push('cost'),
+          onCurrentMode: () => effects.push('mode'),
+          onSessionOpened: () => effects.push('session'),
+        });
+        const chunks = presenter.present({ kind: 'session-update', notification });
+        const modelled = new AcpSessionUpdateNormalizer()
+          .normalize(notification.update).type !== 'unsupported';
+        return drawsASurface(chunks, effects, modelled)
+          ? [notification.update.sessionUpdate]
+          : [];
+      }),
+    );
+    const missing = observed.filter(update => !consumed.has(update)).sort();
+
+    expect(missing).toEqual([...UNMODELLED_BY_PROVIDER.reasonix].sort());
   });
 
   it('replays every recording that observed session updates', () => {

@@ -269,7 +269,7 @@ describe('diagnostic redaction (D7)', () => {
       expect.arrayContaining(['execution.cleanup.failed']),
     );
     expect([...new Set(sites.flatMap(site => site.dataKeys))].sort())
-      .toEqual(['code', 'modeId', 'phase', 'reason', 'recordKind']);
+      .toEqual(['code', 'method', 'modeId', 'phase', 'reason', 'recordKind']);
   });
 
   it('writes every key it logs, instead of a row of redactions', () => {
@@ -344,12 +344,15 @@ describe('diagnostic redaction (D7)', () => {
     // it is provider vocabulary — a mode id, a provider id, a reason — and not
     // anything a person typed. Adding one is a decision, and this is where it
     // gets made rather than noticed.
-    // Four across the whole execution path, and each is a name rather than a
-    // value: which mode was refused, which recovery phase skipped a record,
-    // which kind of record a build cannot read, and which issue code a
-    // result-link sweep collected. None of them can carry what a person typed.
+    // Five across the whole execution path, and each is a name rather than a
+    // value: which mode was refused, which JSON-RPC method refused it, which
+    // recovery phase skipped a record, which kind of record a build cannot
+    // read, and which issue code a result-link sweep collected. None of them
+    // can carry what a person typed — `method` least of all, since the two
+    // values it takes are written out as a union beside the reporter that
+    // fills it.
     expect([...new Set(sites.flatMap(site => site.dataKeys))].sort())
-      .toEqual(['code', 'modeId', 'phase', 'reason', 'recordKind']);
+      .toEqual(['code', 'method', 'modeId', 'phase', 'reason', 'recordKind']);
     const written = sanitizeDebugLogData({ modeId: 'Summarize my private note' });
 
     // Not redacted, because it is on the safe list — which is exactly why the

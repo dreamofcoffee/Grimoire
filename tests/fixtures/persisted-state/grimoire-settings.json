@@ -44,6 +44,9 @@
     },
     "devin": {
       "enabled": false
+    },
+    "reasonix": {
+      "enabled": false
     }
   },
   "sharedEnvironmentVariables": {

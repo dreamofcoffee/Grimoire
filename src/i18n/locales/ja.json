@@ -1061,6 +1061,9 @@
       },
       "devin": {
         "desc": "ネイティブのAgent Client Protocolランタイムを通じたCognitionのDevin CLI。"
+      },
+      "reasonix": {
+        "desc": "ネイティブのAgent Client Protocolランタイムを通じたオープンソースのコーディングエージェントReasonix。"
       }
     },
     "hub": {
@@ -1371,6 +1374,22 @@
           "heading": "環境",
           "name": "環境変数",
           "desc": "使用前に`devin auth login`でサインインしてください。DEVIN_MODELやRUST_LOGなどの任意のCLI変数は渡されます。Grimoireはサインインを自動化しません。"
+        }
+      },
+      "reasonix": {
+        "cliPath": {
+          "name": "Reasonix CLIパス",
+          "desc": "ローカルReasonix CLIへのカスタムパス。PATHから`reasonix`を起動する場合は空欄にしてください。"
+        },
+        "hiddenCommands": {
+          "name": "非表示のコマンド",
+          "desc": "Reasonix ACPが報告した特定のコマンドを隠します。先頭のスラッシュを除いた名前を1行に1つ入力してください。",
+          "placeholder": "init\nreview\nresearch"
+        },
+        "environment": {
+          "heading": "環境",
+          "name": "環境変数",
+          "desc": "使用前に`reasonix setup`を実行してプロバイダーと認証情報を設定してください。REASONIX_HOMEなどの任意のCLI変数は渡されます。Grimoireはサインインを自動化しません。"
         }
       }
     },

@@ -19,7 +19,7 @@ describe('AgentFidelity', () => {
   it('reads the catalog it is meant to be projecting', () => {
     // Guards every assertion below: an empty catalog satisfies a per-module
     // rule for the same reason a correct one does.
-    expect(modules).toHaveLength(10);
+    expect(modules).toHaveLength(11);
   });
 
   it.each(modules.map(module => [module.manifest.id, module] as const))(
@@ -59,6 +59,7 @@ describe('AgentFidelity', () => {
       'gemini: none',
       'qwen: none',
       'devin: none',
+      'reasonix: none',
     ]);
   });
 

@@ -171,6 +171,51 @@ describe('InlinePermissionRequest', () => {
     expect(parentEl.querySelector('.grimoire-permission-body')).toBeNull();
   });
 
+  it('refuses Enter and A on a card whose options are several answers', () => {
+    // Reasonix's `ask` tool arrives on the permission channel with four
+    // distinct `allow_once` answers (probed 2026-09-09), so every one of them
+    // presents as `allow`. A shortcut that took the first would hand the agent
+    // answer one of four as the person's considered choice, on the most
+    // habitual keypress there is. Each answer is still reachable by its number.
+    const parentEl = createMockEl();
+    const resolve = jest.fn();
+    renderPermissionRequest(parentEl, {
+      toolName: 'Reasonix asks',
+      input: {},
+      description: 'What should the CONTRIBUTING.md be written for?',
+      decisionOptions: [
+        { decision: 'allow', label: 'Generic template', value: 'q1:1' },
+        { decision: 'allow', label: 'Rust (Cargo)', value: 'q1:2' },
+        { decision: 'allow', label: 'Node / TypeScript', value: 'q1:3' },
+        { decision: 'cancel', label: 'Cancel', value: 'q1:cancel' },
+      ],
+      resolve,
+    });
+    const doc = parentEl.querySelector('.grimoire-permission-anchor')?.ownerDocument;
+
+    for (const key of ['Enter', 'a']) {
+      const event = {
+        type: 'keydown',
+        key,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      };
+      doc?.dispatchEvent(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(resolve).not.toHaveBeenCalled();
+
+    // The numbers still work, which is what makes refusing the shortcut safe.
+    const numbered = {
+      type: 'keydown',
+      key: '2',
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    };
+    doc?.dispatchEvent(numbered);
+    expect(resolve).toHaveBeenCalledWith('q1:2');
+  });
+
   it('resolves Enter and Escape to their exact option values', () => {
     const allowParentEl = createMockEl();
     const allowResolve = jest.fn();

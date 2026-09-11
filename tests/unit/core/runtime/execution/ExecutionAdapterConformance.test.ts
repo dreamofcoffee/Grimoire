@@ -9,12 +9,14 @@ import {
   ANTIGRAVITY_PROVIDER_CAPABILITIES,
   CLAUDE_PROVIDER_CAPABILITIES,
   CODEX_PROVIDER_CAPABILITIES,
+  DEVIN_PROVIDER_CAPABILITIES,
   GEMINI_PROVIDER_CAPABILITIES,
   GROK_PROVIDER_CAPABILITIES,
   KIMICODE_PROVIDER_CAPABILITIES,
   MIMOCODE_PROVIDER_CAPABILITIES,
   OPENCODE_PROVIDER_CAPABILITIES,
   QWEN_PROVIDER_CAPABILITIES,
+  REASONIX_PROVIDER_CAPABILITIES,
 } from '@test/fixtures/providerCapabilityBaseline';
 import { TestDurableStorage } from '@test/unit/core/persistence/TestDurableStorage';
 
@@ -65,12 +67,14 @@ import type { StreamChunk } from '@/core/types/chat';
 import { antigravityProviderModule } from '@/providers/antigravity/AntigravityProviderModule';
 import { claudeProviderModule } from '@/providers/claude/ClaudeProviderModule';
 import { codexProviderModule } from '@/providers/codex/CodexProviderModule';
+import { devinProviderModule } from '@/providers/devin/DevinProviderModule';
 import { geminiProviderModule } from '@/providers/gemini/GeminiProviderModule';
 import { grokProviderModule } from '@/providers/grok/GrokProviderModule';
 import { kimicodeProviderModule } from '@/providers/kimicode/KimicodeProviderModule';
 import { mimocodeProviderModule } from '@/providers/mimocode/MimocodeProviderModule';
 import { opencodeProviderModule } from '@/providers/opencode/OpencodeProviderModule';
 import { qwenProviderModule } from '@/providers/qwen/QwenProviderModule';
+import { reasonixProviderModule } from '@/providers/reasonix/ReasonixProviderModule';
 
 /**
  * The adapter as a client of the registry, over the real lifecycle.
@@ -458,6 +462,8 @@ describe('execution adapter over the registry', () => {
       kimicodeProviderModule,
       mimocodeProviderModule,
       qwenProviderModule,
+      devinProviderModule,
+      reasonixProviderModule,
     ];
 
     const liveRecords = {
@@ -470,6 +476,8 @@ describe('execution adapter over the registry', () => {
       kimicode: KIMICODE_PROVIDER_CAPABILITIES,
       mimocode: MIMOCODE_PROVIDER_CAPABILITIES,
       qwen: QWEN_PROVIDER_CAPABILITIES,
+      devin: DEVIN_PROVIDER_CAPABILITIES,
+      reasonix: REASONIX_PROVIDER_CAPABILITIES,
     } as const;
 
     /**

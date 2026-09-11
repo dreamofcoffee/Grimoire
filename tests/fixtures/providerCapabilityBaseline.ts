@@ -188,3 +188,26 @@ export const DEVIN_PROVIDER_CAPABILITIES: Readonly<ProviderCapabilities> = Objec
   supportsTurnSteer: false,
   reasoningControl: 'none',
 });
+
+export const REASONIX_PROVIDER_CAPABILITIES: Readonly<ProviderCapabilities> = Object.freeze({
+  providerId: 'reasonix',
+  supportsPersistentRuntime: true,
+  // Resume uses ACP loadSession + Grimoire-persisted messages only; the
+  // replay a `session/load` sends is not read back.
+  supportsNativeHistory: false,
+  supportsPlanMode: true,
+  supportsRewind: false,
+  supportsFork: false,
+  // The session announces its own commands on `session/new` (recorded).
+  supportsProviderCommands: true,
+  // `promptCapabilities.image` is false in the recorded handshake.
+  supportsImageAttachments: false,
+  supportsInstructionMode: true,
+  supportsMcpTools: false,
+  // `_reasonix.io/session/steer` exists and nothing drives it yet.
+  supportsTurnSteer: false,
+  // Driven, and discovered per session: which levels a model takes is decided
+  // by the provider block serving it, so the picker is fed from the session's
+  // own `effort` option rather than from a list written here.
+  reasoningControl: 'effort',
+});
