@@ -125,15 +125,16 @@ describe('buildReasonixPrompt', () => {
       .toContain('## Grimoire Parallel Workers Mode');
   });
 
-  it('sends an attached image beside the text rather than inside it', () => {
+  it('sends no image block, because the agent declares it takes none', () => {
+    // The recorded handshake answers `promptCapabilities: { image: false }`
+    // and the module declares `imageAttachments: 'unsupported'`. Devin's
+    // builder appends one block per attachment; carrying that over would send
+    // this agent a block type it said it does not take.
     const blocks = buildReasonixPromptBlocks({
       text: 'What is this?',
       images: [{ data: 'AAAA', mediaType: 'image/png' } as never],
     });
 
-    expect(blocks).toEqual([
-      { text: 'What is this?', type: 'text' },
-      { data: 'AAAA', mimeType: 'image/png', type: 'image' },
-    ]);
+    expect(blocks).toEqual([{ text: 'What is this?', type: 'text' }]);
   });
 });

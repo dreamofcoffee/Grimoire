@@ -4,11 +4,23 @@
  * **The request says what it is about, so nothing here remembers.** Probed on
  * 2026-09-09 against `reasonix v1.38.3`: `session/request_permission` carries a
  * `toolCall` with `title`, `kind`, `rawInput` and `locations` already filled in,
- * plus `_meta["reasonix.io"]` naming the tool and its subject. That is the
- * difference from Devin, whose requests carry an id and nothing else and whose
- * composition therefore keeps the last sixty-four `tool_call` updates to look
- * one up. Reasonix needs no such memory, and adding one would be a cache with
- * no question to answer.
+ * and usually `_meta["reasonix.io"]` naming the tool and its subject. That is
+ * the difference from Devin, whose requests carry an id and nothing else and
+ * whose composition therefore keeps the last sixty-four `tool_call` updates to
+ * look one up. Reasonix needs no such memory.
+ *
+ * **The tool is read from `_meta`, not from `kind`.** Three of the four shapes
+ * probed arrive as `kind: "other"`, so switching on the kind recognises almost
+ * nothing. What tells them apart is `_meta["reasonix.io"].tool`, and where that
+ * is absent, a field of `rawInput`:
+ *
+ * - a write — `kind: "edit"`, `rawInput {path, content}`, `_meta.tool
+ *   "write_file"`;
+ * - a shell command — `rawInput.command`;
+ * - leaving Plan mode — `kind: "other"`, `title "exit_plan_mode"`, `_meta.tool
+ *   "exit_plan_mode"`, and nothing else at all;
+ * - a question from the `ask` tool — `kind: "other"`, no `_meta`, `rawInput
+ *   {question, options, multi}`, and the whole question repeated as the title.
  */
 
 /** What the approval prompt says, for one Reasonix permission request. */
@@ -21,6 +33,9 @@ export interface ReasonixPermissionPresentation {
 /** Where Reasonix names the tool and subject of the call it is asking about. */
 const REASONIX_META_KEY = 'reasonix.io';
 
+/** The tool Reasonix raises to leave Plan mode. */
+const EXIT_PLAN_TOOL = 'exit_plan_mode';
+
 /** The prompt's words, from the tool that raised the request. */
 export function buildReasonixPermissionPresentation(
   rawTitle: string | null | undefined,
@@ -30,21 +45,32 @@ export function buildReasonixPermissionPresentation(
   meta?: Record<string, unknown> | null,
 ): ReasonixPermissionPresentation {
   const vendor = asRecord(meta?.[REASONIX_META_KEY]);
-  const title = rawTitle?.trim() || readString(vendor, 'tool') || '';
+  const title = rawTitle?.trim() ?? '';
+  const tool = readString(vendor, 'tool') ?? title;
   const kind = rawKind?.trim() || '';
+
+  // Before the title is used for anything, because for a question the title
+  // *is* the question and would otherwise become the name of the tool.
+  const question = readString(input, 'question');
+  if (question) {
+    return {
+      description: question,
+      toolName: 'Reasonix asks',
+    };
+  }
 
   const command = readString(input, 'command');
   if (command) {
     return {
       description: `Reasonix wants to run \`${command}\`.`,
-      toolName: title || 'Shell command',
+      toolName: tool || 'Shell command',
     };
   }
 
-  if (kind === 'switch_mode') {
+  if (tool === EXIT_PLAN_TOOL || kind === 'switch_mode') {
     return {
       description: 'Reasonix wants to leave Plan mode and start implementing the plan.',
-      toolName: title || 'Exit plan mode',
+      toolName: 'Exit plan mode',
     };
   }
 
@@ -53,11 +79,11 @@ export function buildReasonixPermissionPresentation(
     return {
       blockedPath: path,
       description: `Reasonix wants to write ${path}.`,
-      toolName: title || 'Write file',
+      toolName: title || tool || 'Write file',
     };
   }
 
-  const toolName = title || kind || 'Reasonix action';
+  const toolName = title || tool || kind || 'Reasonix action';
   return {
     ...(path ? { blockedPath: path } : {}),
     description: path

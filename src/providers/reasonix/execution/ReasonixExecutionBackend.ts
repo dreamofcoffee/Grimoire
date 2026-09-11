@@ -12,9 +12,10 @@ export const REASONIX_EXECUTION_DESCRIPTOR = Object.freeze({
 /**
  * Reasonix's execution backend: the shared managed-ACP one, under its own id.
  *
- * The seventh provider on it. What is Reasonix's is beside this file: `reasonix acp`
- * as a subcommand, models and modes read from `configOptions`, and a permission
- * request whose only content is a command line in `_meta`.
+ * The eighth provider on it. What is Reasonix's is beside this file: `reasonix
+ * acp` as a subcommand, models and modes read in ACP's own vocabulary, a
+ * permission request that already describes itself, and the turn's tokens read
+ * off a notification the agent sends under its own name.
  */
 export class ReasonixExecutionBackend extends ManagedAcpExecutionBackend {
   constructor(context: Omit<ManagedAcpExecutionBackendContext, 'descriptor'>) {

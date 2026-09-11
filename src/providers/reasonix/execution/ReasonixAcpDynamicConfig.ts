@@ -21,13 +21,15 @@ export type ReasonixModeRefusedReporter = (input: {
   /** Grimoire's own word for it, which is what the person picked. */
   readonly modeId: string;
   /**
-   * Which of the pair the agent refused, since one mode is two calls.
+   * Which call refused it, since one Grimoire mode is two.
    *
    * The wire method rather than a name of this file's own, because the debug
    * log's safe-key list already admits `method` — a key nobody has thought
-   * about is refused there, and `method` is one somebody did.
+   * about is refused there, and `method` is one somebody did. Only ever
+   * `session/set_mode`: a refused posture fails the turn rather than being
+   * reported.
    */
-  readonly method: 'session/set_mode' | 'session/set_config_option';
+  readonly method: 'session/set_mode';
   readonly error: unknown;
 }) => void;
 
@@ -43,22 +45,23 @@ export type ReasonixModeRefusedReporter = (input: {
  * answers `{}` and pushes a `current_mode_update`, and the config option answers
  * with the session's whole option list.
  *
- * **The posture goes first, and that order is a safety property.** Two calls
- * can half-succeed, and the half that must not be the survivor is the loose
- * one: a person leaving Auto-approve for Safe whose mode call landed and whose
- * posture call did not would run the turn on `yolo` behind a toolbar reading
- * Safe. Sent posture-first, a failure leaves the session in the mode it already
- * had *and* stops before the mode moves, so the pair is only ever wrong in the
- * stricter direction.
+ * **A posture that will not move fails the turn; a mode that will not move
+ * does not.** Ordering alone cannot make the pair safe, which is what an
+ * earlier version of this file claimed and got wrong: Safe and Auto-approve are
+ * the *same* session mode, so the posture is the only thing that separates
+ * them, and a swallowed `tool_approval` failure leaves a person who asked for
+ * Safe running on `yolo` no matter which call went first. The posture is the
+ * permission boundary, so a turn that cannot establish it must not be
+ * dispatched. The mode is behaviour rather than permission, so a refused one is
+ * reported and the turn runs in the mode the session already had.
  *
  * The model goes through `session/set_config_option` rather than
  * `session/set_model`. Reasonix answers both, and the config option is the one
  * that reports back what the session now holds, so a turn that ran on another
  * model than the badge shows is visible rather than silent.
  *
- * Model first and strict, posture and mode after and tolerant: a model the
- * session did not offer must fail the turn rather than run it somewhere else,
- * while a refused mode leaves the session in the mode it already had.
+ * The model is strict for the same reason the posture is: a turn that silently
+ * ran on a model other than the badge shows is worse than a failed one.
  */
 export class ReasonixAcpDynamicConfigApplier implements ReasonixExecutionDynamicApplier {
   /** The sessions already told about a refusal, so a turn is not the unit. */
@@ -92,18 +95,17 @@ export class ReasonixAcpDynamicConfigApplier implements ReasonixExecutionDynamic
     input: Parameters<ReasonixExecutionDynamicApplier['apply']>[0],
     grimoireMode: string,
   ): Promise<void> {
-    // Only ever `tool_approval` at this point: the model's own set is in
-    // `apply`, and it is strict rather than reported.
-    let method: 'session/set_mode' | 'session/set_config_option' = 'session/set_config_option';
+    // Not caught: the posture is what separates Safe from Auto-approve, so a
+    // turn that could not set it has no permission boundary to run behind.
+    await input.client.setConfigOption({
+      configId: 'tool_approval',
+      sessionId: input.sessionId,
+      type: 'select',
+      value: mapGrimoireModeToReasonixApproval(grimoireMode),
+    });
+    throwIfAborted(input.signal);
+
     try {
-      await input.client.setConfigOption({
-        configId: 'tool_approval',
-        sessionId: input.sessionId,
-        type: 'select',
-        value: mapGrimoireModeToReasonixApproval(grimoireMode),
-      });
-      throwIfAborted(input.signal);
-      method = 'session/set_mode';
       await input.client.setMode({
         modeId: mapGrimoireModeToReasonix(grimoireMode),
         sessionId: input.sessionId,
@@ -117,11 +119,11 @@ export class ReasonixAcpDynamicConfigApplier implements ReasonixExecutionDynamic
       // picked and what the toolbar still shows. The agent's own id would
       // say "normal" for both Safe and Auto-approve, which are the two the
       // notice most needs to tell apart.
-      this.onModeRefused?.({ error, method, modeId: grimoireMode });
+      this.onModeRefused?.({ error, method: 'session/set_mode', modeId: grimoireMode });
       if (this.reportedSessions.has(input.sessionId)) {
         return;
       }
-      this.reportedSessions.add(input.sessionId);
+      this.remember(input.sessionId);
       const detail = refusalDetail(error);
       input.presentContent?.({
         kind: 'mode-refused',
@@ -130,7 +132,27 @@ export class ReasonixAcpDynamicConfigApplier implements ReasonixExecutionDynamic
       } satisfies AcpContentPayload);
     }
   }
+
+  /**
+   * Records that this session has been told, and forgets the oldest.
+   *
+   * The applier is built once and lives as long as the plugin, while a session
+   * id is minted per restart — and the launch key carries a workspace
+   * generation that every vault change bumps. Unbounded, this would keep one
+   * uuid per refusing session for the life of the process.
+   */
+  private remember(sessionId: string): void {
+    this.reportedSessions.add(sessionId);
+    while (this.reportedSessions.size > REPORTED_SESSION_MEMORY) {
+      const oldest = this.reportedSessions.values().next();
+      if (oldest.done) return;
+      this.reportedSessions.delete(oldest.value);
+    }
+  }
 }
+
+/** How many sessions are remembered as already told about a refused mode. */
+const REPORTED_SESSION_MEMORY = 64;
 
 /**
  * The sentence worth showing, out of the error the agent sent.

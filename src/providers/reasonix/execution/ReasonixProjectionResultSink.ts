@@ -10,9 +10,11 @@ import type { ReasonixExecutionResultSink } from './ReasonixExecutionBackend';
  *
  * The answer is durable once — in the conversation Grimoire persists — and D2
  * forbids a second copy of a provider transcript, so this commits without
- * writing. No recovery port and no turn-end hook: Reasonix's `usage_update`
- * carries the context window on the wire, so unlike Qwen there is nothing to
- * ask the agent for as the turn ends.
+ * writing. No recovery port and no turn-end hook: the turn's tokens arrive
+ * unasked on `_reasonix.io/session/status_update`, so unlike Qwen there is
+ * nothing to ask the agent for as the turn ends. (Reasonix sends no
+ * `usage_update` at all; `ReasonixSessionNotifications` makes one out of that
+ * status.)
  */
 export class ReasonixProjectionResultSink implements ReasonixExecutionResultSink {
   async storeResult(input: {

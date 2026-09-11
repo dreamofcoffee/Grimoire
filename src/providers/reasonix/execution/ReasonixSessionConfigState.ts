@@ -1,3 +1,4 @@
+import { hashCatalogFingerprint } from '@/core/providers/catalogFingerprint';
 import { ProviderSettingsCoordinator } from '@/core/providers/ProviderSettingsCoordinator';
 import type { ChatRuntimeQueryOptions } from '@/core/runtime/types';
 import {
@@ -23,6 +24,16 @@ const PROVIDER_ID = 'reasonix' as const;
 export interface ReasonixSessionConfigPorts {
   /** The whole settings object, which this both reads and seeds. */
   readonly settingsBag: () => Record<string, unknown>;
+  /**
+   * What the discovered catalogue was discovered *under*.
+   *
+   * Stored beside the models, because the refresh cache reads it back on the
+   * next load to tell a list discovered under this configuration from one
+   * merely assumed to match. Without a writer the recorded digest stays empty
+   * and `seedFingerprintMatches` short-circuits to true for every load, so a
+   * stale list survives a CLI upgrade or a changed `REASONIX_HOME`.
+   */
+  readonly catalogFingerprint?: () => string;
 }
 
 /**
@@ -161,23 +172,41 @@ export class ReasonixSessionConfigState {
       this.currentSessionModelId = modelState.currentModelId;
     }
 
+    const stored = getReasonixProviderSettings(this.ports.settingsBag());
     if (modelState.availableModels.length > 0) {
-      updates.discoveredModels = modelState.availableModels.map((model): ReasonixDiscoveredModel => ({
+      const discoveredModels = modelState.availableModels.map((model): ReasonixDiscoveredModel => ({
         description: model.description ?? undefined,
         label: model.name || model.id,
         rawId: model.id,
       }));
-      updates.visibleModels = modelState.availableModels
+      const visibleModels = modelState.availableModels
         .map((model) => model.id.trim())
         .filter(Boolean);
+      // **Only when it actually differs.** Reasonix answers every
+      // `session/set_config_option` with its whole option list, and a turn
+      // sends two — so reporting "changed" for an echo spent a full
+      // `saveSettings` and a selector rebuild across every open view, twice a
+      // turn, for a catalogue nobody had touched.
+      if (!sameModels(stored.discoveredModels, discoveredModels)) {
+        updates.discoveredModels = discoveredModels;
+        updates.visibleModels = visibleModels;
+        const fingerprint = this.ports.catalogFingerprint?.();
+        if (fingerprint) {
+          updates.discoveredModelsFingerprint = hashCatalogFingerprint(fingerprint);
+        }
+      }
     }
 
     if (modeState.availableModes.length > 0) {
-      updates.availableModes = modeState.availableModes.map((mode): ReasonixMode => ({
+      const availableModes = modeState.availableModes.map((mode): ReasonixMode => ({
         description: mode.description ?? undefined,
         id: mode.id,
         name: mode.name,
       }));
+      if (stored.availableModes.map(mode => mode.id).join('\u0000')
+        !== availableModes.map(mode => mode.id).join('\u0000')) {
+        updates.availableModes = availableModes;
+      }
     }
 
     if (modeState.currentModeId) {
@@ -192,4 +221,14 @@ export class ReasonixSessionConfigState {
     updateReasonixProviderSettings(this.ports.settingsBag(), updates);
     return true;
   }
+}
+
+/** Whether a reported catalogue is the one already stored, id and label alike. */
+function sameModels(
+  stored: readonly ReasonixDiscoveredModel[],
+  reported: readonly ReasonixDiscoveredModel[],
+): boolean {
+  return stored.length === reported.length
+    && stored.every((model, index) => model.rawId === reported[index]?.rawId
+      && model.label === reported[index]?.label);
 }

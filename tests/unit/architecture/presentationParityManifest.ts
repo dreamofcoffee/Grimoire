@@ -62,6 +62,7 @@ const PROVIDER_CHAT_UI_CONFIGS = [
   'src/providers/opencode/ui/OpencodeChatUIConfig.ts',
   'src/providers/qwen/ui/QwenChatUIConfig.ts',
   'src/providers/devin/ui/DevinChatUIConfig.ts',
+  'src/providers/reasonix/ui/ReasonixChatUIConfig.ts',
 ];
 
 export const PARITY_SURFACES: ParitySurface[] = [
@@ -369,6 +370,7 @@ export const PARITY_SURFACES: ParitySurface[] = [
       'src/providers/opencode/ui/OpencodeSettingsTab.ts',
       'src/providers/qwen/ui/QwenSettingsTab.ts',
       'src/providers/devin/ui/DevinSettingsTab.ts',
+      'src/providers/reasonix/ui/ReasonixSettingsTab.ts',
     ],
   },
   {
@@ -474,6 +476,7 @@ export const PARITY_SURFACES: ParitySurface[] = [
       'src/providers/opencode/commands/OpencodeCommandCatalog.ts',
       'src/providers/qwen/commands/QwenCommandCatalog.ts',
       'src/providers/devin/commands/DevinCommandCatalog.ts',
+      'src/providers/reasonix/commands/ReasonixCommandCatalog.ts',
     ],
   },
   {
@@ -492,6 +495,7 @@ export const PARITY_SURFACES: ParitySurface[] = [
       'src/providers/opencode/history/OpencodeConversationHistoryService.ts',
       'src/providers/qwen/history/QwenConversationHistoryService.ts',
       'src/providers/devin/history/DevinConversationHistoryService.ts',
+      'src/providers/reasonix/history/ReasonixConversationHistoryService.ts',
     ],
   },
   {
@@ -510,6 +514,7 @@ export const PARITY_SURFACES: ParitySurface[] = [
       'src/providers/opencode/runtime/OpencodeCliResolver.ts',
       'src/providers/qwen/runtime/QwenCliResolver.ts',
       'src/providers/devin/runtime/DevinCliResolver.ts',
+      'src/providers/reasonix/runtime/ReasonixCliResolver.ts',
     ],
   },
   {
@@ -646,6 +651,19 @@ export const PARITY_SURFACES: ParitySurface[] = [
       'src/providers/devin/execution/DevinPermissionPresentation.ts',
       'src/providers/devin/execution/DevinProjectionResultSink.ts',
       'src/providers/devin/execution/DevinSessionConfigState.ts',
+      'src/providers/reasonix/execution/ReasonixExecutionComposition.ts',
+      'src/providers/reasonix/execution/ReasonixMetadataSession.ts',
+      'src/providers/reasonix/ReasonixProviderModule.ts',
+      'src/providers/reasonix/app/ReasonixModuleContext.ts',
+      'src/providers/reasonix/execution/ReasonixAcpDynamicConfig.ts',
+      'src/providers/reasonix/execution/ReasonixContentPresenter.ts',
+      'src/providers/reasonix/execution/ReasonixExecutionBackend.ts',
+      'src/providers/reasonix/execution/ReasonixExecutionRequests.ts',
+      'src/providers/reasonix/execution/ReasonixInteractionBridge.ts',
+      'src/providers/reasonix/execution/ReasonixPermissionPresentation.ts',
+      'src/providers/reasonix/execution/ReasonixProjectionResultSink.ts',
+      'src/providers/reasonix/execution/ReasonixSessionConfigState.ts',
+      'src/providers/reasonix/runtime/ReasonixSessionNotifications.ts',
       // Grok chat execution, flipped: the second ACP provider on the kernel,
       // and the isolated session its five metadata surfaces now share.
       'src/providers/grok/execution/GrokExecutionComposition.ts',

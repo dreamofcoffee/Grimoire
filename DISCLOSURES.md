@@ -22,6 +22,7 @@ Full functionality requires at least one external CLI provider. Those providers 
 - Grok Build may require a Grok/xAI account, subscription, OAuth access, or API key.
 - Qwen Code may require an Alibaba ModelStudio, third-party provider, or custom-provider account and configuration.
 - Devin may require a Cognition account signed in through `devin auth login`; which models it offers is decided by that account.
+- Reasonix requires a model provider configured through `reasonix setup`; the API key is named by `api_key_env` and read from the environment, and which models a session offers is decided by that configuration.
 
 Provider billing, quotas, rate limits, retention, and account requirements are controlled by the provider, not by Grimoire.
 
@@ -151,5 +152,6 @@ trademark; Grimoire is not affiliated with, endorsed by, or a product of any of 
 | Grok Build | `Grok-icon.svg` on Wikimedia Commons, glyph only, without its black square |
 | Kimi Code | Moonshot AI's [branding guide](https://moonshotai.github.io/Branding-Guide/), the icon-only "K" |
 | MiMoCode | Xiaomi's 2021 wordmark on Wikimedia Commons, glyph only, without its squircle |
+| Reasonix | `reasonix.io/favicon.svg`, the monogram only, without its rounded plate |
 
 A vendor who would rather their mark were not carried here can ask, and it will be removed.

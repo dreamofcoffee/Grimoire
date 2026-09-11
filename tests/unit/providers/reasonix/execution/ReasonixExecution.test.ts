@@ -99,11 +99,12 @@ describe('Reasonix dynamic configuration', () => {
     }]);
   });
 
-  it('never moves the mode when the approval posture would not move', async () => {
-    // The half-succeed that must not happen. Leaving Auto-approve for Safe, a
-    // mode that landed and a posture that did not would run the turn on `yolo`
-    // behind a toolbar reading Safe, and the once-per-session notice would then
-    // stay quiet about it for every later turn.
+  it('fails the turn when the approval posture would not move', async () => {
+    // The half-succeed that must not happen, and ordering alone cannot stop
+    // it: Safe and Auto-approve are the same session mode, so the posture is
+    // the only thing that separates them. A swallowed failure would run a turn
+    // on `yolo` behind a toolbar reading Safe, and the once-per-session notice
+    // would then stay quiet about it for every later turn.
     const calls: string[] = [];
     const client = {
       setConfigOption: async ({ configId }: { configId: string }) => {
@@ -124,15 +125,18 @@ describe('Reasonix dynamic configuration', () => {
       ({ method, modeId }) => refused.push({ method, modeId }),
     );
 
-    await applier.apply({
+    await expect(applier.apply({
       client,
       sessionId: 'native-session',
       dynamicRef: 'opaque-config',
       signal: new AbortController().signal,
-    });
+    })).rejects.toThrow('Invalid params');
 
+    // The mode is never sent, and nothing is reported as a refusal: the turn
+    // does not run at all, which is the only safe answer when the permission
+    // boundary could not be established.
     expect(calls).toEqual(['set-config:tool_approval']);
-    expect(refused).toEqual([{ method: 'session/set_config_option', modeId: 'normal' }]);
+    expect(refused).toEqual([]);
   });
 
   it('tells a person once per session, not once per turn', async () => {
@@ -164,8 +168,9 @@ describe('Reasonix dynamic configuration', () => {
     // was refused.
     const presented: unknown[] = [];
     const client = {
-      setConfigOption: async () => {
-        throw new JsonRpcErrorResponse('session/set_config_option', -32602, 'Invalid params');
+      setConfigOption: async () => ({ configOptions: [] }),
+      setMode: async () => {
+        throw new JsonRpcErrorResponse('session/set_mode', -32602, 'Invalid params');
       },
     } as unknown as ManagedAcpClient;
     const applier = new ReasonixAcpDynamicConfigApplier({
@@ -308,12 +313,34 @@ describe('Reasonix permission presentation', () => {
     });
   });
 
-  it('says what a plan exit is asking', () => {
-    expect(buildReasonixPermissionPresentation('Exit plan mode', 'switch_mode', {}, undefined))
-      .toEqual({
-        description: 'Reasonix wants to leave Plan mode and start implementing the plan.',
-        toolName: 'Exit plan mode',
-      });
+  it('says what a plan exit is asking, in the shape it really arrives in', () => {
+    // Probed 2026-09-09: `kind` is `other`, not `switch_mode`, and the tool is
+    // named only in `_meta`. Keying on the kind recognised nothing, and the
+    // most consequential approval in the product read "exit_plan_mode requests
+    // permission." The earlier test passed because it fabricated Devin's shape.
+    expect(buildReasonixPermissionPresentation('exit_plan_mode', 'other', {}, undefined, {
+      'reasonix.io': { approvalId: '2', fresh: false, subject: '', tool: 'exit_plan_mode' },
+    })).toEqual({
+      description: 'Reasonix wants to leave Plan mode and start implementing the plan.',
+      toolName: 'Exit plan mode',
+    });
+  });
+
+  it('asks the question the ask tool sent, rather than naming the card after it', () => {
+    // The whole question arrives as the title, so a presenter that falls
+    // through to the generic branch makes it the *name* of the tool and then
+    // says it "requests permission".
+    const question = 'What should the CONTRIBUTING.md be written for?';
+
+    expect(buildReasonixPermissionPresentation(question, 'other', {
+      id: 'q1',
+      multi: false,
+      question,
+      options: [{ Label: 'Generic template', Description: 'Language-agnostic.' }],
+    }, undefined, null)).toEqual({
+      description: question,
+      toolName: 'Reasonix asks',
+    });
   });
 
   it('falls back to the kind, then to a name, rather than asking about nothing', () => {

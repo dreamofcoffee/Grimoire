@@ -65,6 +65,7 @@ import {
 } from '@/providers/reasonix/execution/ReasonixMetadataSession';
 import { ReasonixProjectionResultSink } from '@/providers/reasonix/execution/ReasonixProjectionResultSink';
 import { ReasonixSessionConfigState } from '@/providers/reasonix/execution/ReasonixSessionConfigState';
+import { resolveReasonixModelCatalogFingerprint } from '@/providers/reasonix/modelCatalogFingerprint';
 import { reasonixProviderModule } from '@/providers/reasonix/ReasonixProviderModule';
 import {
   buildReasonixPromptBlocks,
@@ -75,6 +76,7 @@ import {
   parseReasonixSessionNotification,
   REASONIX_SESSION_NOTIFICATION_METHODS,
 } from '@/providers/reasonix/runtime/ReasonixSessionNotifications';
+import { getReasonixProviderSettings } from '@/providers/reasonix/settings';
 import { getReasonixState } from '@/providers/reasonix/types';
 import { getVaultPath } from '@/utils/path';
 
@@ -98,7 +100,7 @@ const MAX_RESULT_BYTES = 256_000;
  */
 export class ReasonixExecution {
   private readonly requests = new ReasonixExecutionRequests(
-    () => opaqueId('dvreq'),
+    () => opaqueId('rxreq'),
     () => this.environment(),
   );
 
@@ -230,6 +232,10 @@ export class ReasonixExecution {
 
     const sessionConfig = new ReasonixSessionConfigState({
       settingsBag: () => this.plugin.settings,
+      catalogFingerprint: () => resolveReasonixModelCatalogFingerprint(
+        this.plugin,
+        getReasonixProviderSettings(this.plugin.settings),
+      ),
     });
 
     const content = new ReasonixContentPresenter({
@@ -255,6 +261,19 @@ export class ReasonixExecution {
         { configOptions: [...configOptions] },
       ),
       onSessionOpened: opening => {
+        // **One live session per tab, so the previous ones go.** A tab's
+        // entries were only ever removed when it closed, while a new session id
+        // is minted on every restart — and the launch key carries a workspace
+        // generation that any vault change bumps. Left in, a dead id keeps a
+        // closure over the tab for the life of the plugin, and a later tab that
+        // resumed the same id would have its writes denied when the first tab
+        // closed and deleted the entry it was still using.
+        for (const previous of ownedSessions) {
+          if (previous !== opening.sessionId) {
+            this.writeApprovers.delete(previous);
+          }
+        }
+        ownedSessions.clear();
         ownedSessions.add(opening.sessionId);
         this.writeApprovers.set(
           opening.sessionId,
@@ -281,13 +300,18 @@ export class ReasonixExecution {
     const releaseSettled = this.interactions.onSettled(ref => presenter.dismiss(ref));
 
     const ports: ExecutionChatRuntimeHostPorts = {
-      prepareTurn: (request: ChatTurnRequest) => ({
-        isCompact: false,
-        mcpMentions: request.enabledMcpServers ?? new Set<string>(),
-        persistedContent: buildReasonixPromptText(request),
-        prompt: buildReasonixPromptText(request),
-        request,
-      }),
+      prepareTurn: (request: ChatTurnRequest) => {
+        // Built once: it is eight context appends over every attached note, and
+        // the two fields want the same string.
+        const prompt = buildReasonixPromptText(request);
+        return {
+          isCompact: false,
+          mcpMentions: request.enabledMcpServers ?? new Set<string>(),
+          persistedContent: prompt,
+          prompt,
+          request,
+        };
+      },
       encodeRequestRef: (
         turn: PreparedChatTurn,
         history?: ChatMessage[],

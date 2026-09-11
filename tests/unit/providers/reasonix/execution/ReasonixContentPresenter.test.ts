@@ -226,10 +226,12 @@ describe('Reasonix content presenter', () => {
       usage: expect.objectContaining({
         contextTokens: 5_999,
         inputTokens: 5_996,
-        // No window was stated, so none is claimed and the badge says so.
-        contextWindow: 0,
+        // No window was stated, so the provider default stands in for one and
+        // is left unauthoritative. A zero here is a meter stuck at 0% for the
+        // length of every turn, which is what shipped before this.
+        contextWindow: 200_000,
         contextWindowIsAuthoritative: false,
-        percentage: 0,
+        percentage: 3,
       }),
     })]);
     expect(recorded.costs).toEqual([null]);

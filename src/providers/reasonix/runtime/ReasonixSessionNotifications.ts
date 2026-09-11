@@ -81,7 +81,12 @@ function readUsage(value: unknown): AcpUsage | null {
   }
   return {
     cachedReadTokens: readNumber(value.cacheHitTokens) ?? 0,
-    cachedWriteTokens: readNumber(value.cacheMissTokens) ?? 0,
+    // **`cacheMissTokens` is deliberately not `cachedWriteTokens`.** A miss is
+    // a partition of the prompt, not a cache that was written: the recording's
+    // own numbers are `promptTokens: 5996, cacheMissTokens: 5996`, and mapping
+    // the second would report 11,992 tokens of a 5,996-token prompt under two
+    // names. Reasonix says nothing about cache writes, so neither does this.
+    cachedWriteTokens: 0,
     inputTokens: readNumber(value.promptTokens) ?? 0,
     outputTokens: readNumber(value.completionTokens) ?? 0,
     thoughtTokens: readNumber(value.reasoningTokens) ?? 0,

@@ -37,7 +37,7 @@ const REASONIX_MODELS: ProviderUIOption[] = [
  * configured provider block serves, and a person whose model differs sets it in
  * the settings tab's custom context limits.
  */
-const DEFAULT_CONTEXT_WINDOW = 200_000;
+export const REASONIX_DEFAULT_CONTEXT_WINDOW = 200_000;
 /**
  * One option, because the capability says `reasoningControl: 'none'` and the
  * contribution builds no reasoning group from it.
@@ -106,7 +106,7 @@ export const reasonixChatUIConfig: ProviderChatUIConfig = {
   },
 
   getContextWindowSize(model: string, customLimits?: Record<string, number>): number {
-    return customLimits?.[model] ?? DEFAULT_CONTEXT_WINDOW;
+    return customLimits?.[model] ?? REASONIX_DEFAULT_CONTEXT_WINDOW;
   },
 
   isDefaultModel(model: string): boolean {

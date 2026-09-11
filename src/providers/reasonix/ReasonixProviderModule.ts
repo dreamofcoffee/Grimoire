@@ -120,7 +120,8 @@ const reasonixCapabilities: ProviderCapabilityDescriptor = {
     concurrency: 'serial-runs',
   },
   session: {
-    // Recorded: `loadSession: true`, `sessionCapabilities: { list, delete }`,
+    // Recorded: `loadSession: true`, `sessionCapabilities: { list, resume,
+    // close, delete }`,
     // and a `session/load` that replays the transcript as updates.
     resume: 'native',
     // Grimoire keeps its own projection; the replay is not read back.

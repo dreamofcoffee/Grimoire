@@ -902,12 +902,16 @@ describe('Reasonix execution composition', () => {
     const first = await drain(runtime.query(runtime.prepareTurn({ text: 'first' })));
     const second = await drain(runtime.query(runtime.prepareTurn({ text: 'second' })));
 
-    // The window is the half only the update carries: the prompt answer's
-    // own `totalTokens` is the same number as `used` on the recorded wire.
+    // A window the wire stated is the thing that must not outlive its turn.
+    // Both turns draw a window now, because the provider default stands in
+    // whenever the agent states none — so what tells them apart is whether the
+    // badge still claims the number came from the agent.
     expect(first.some(chunk => chunk.type === 'usage'
-      && chunk.usage?.contextWindow === 200_000)).toBe(true);
+      && chunk.usage?.contextWindowIsAuthoritative === true)).toBe(true);
     expect(second.some(chunk => chunk.type === 'usage'
-      && chunk.usage?.contextWindow === 200_000)).toBe(false);
+      && chunk.usage?.contextWindowIsAuthoritative === true)).toBe(false);
+    expect(second.some(chunk => chunk.type === 'usage'
+      && chunk.usage?.contextWindow === 200_000)).toBe(true);
     execution.dispose();
     await host.dispose();
   });
@@ -1128,7 +1132,7 @@ describe('Reasonix execution composition', () => {
     await host.registry.startRun(SESSION_ID, {
       runId: RUN_ID,
       owner: OWNER,
-      requestRef: 'dvreq-0000000000000000000000000000000f',
+      requestRef: 'rxreq-0000000000000000000000000000000f',
       resultExpectation: 'required',
     });
     await settle(host, events);

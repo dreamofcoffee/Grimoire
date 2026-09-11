@@ -68,7 +68,7 @@ export function createReasonixModuleContext(
     /**
      * Nothing to hydrate, which is this provider's own answer and Gemini's.
      *
-     * `capabilities.ts` declares `supportsNativeHistory: false`: Reasonix keeps no
+     * The module declares `history.ownership: 'grimoire-projection'`: Reasonix keeps no
      * transcript Grimoire can read a conversation back out of. `absent` is what
      * the conversation actually has, where a `complete` would tell the surface a
      * hydration happened.

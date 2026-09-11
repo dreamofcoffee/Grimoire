@@ -1,6 +1,6 @@
 import { applyOrchestratorModeInstructions } from '../../../core/prompt/mainAgent';
 import type { ChatTurnRequest } from '../../../core/runtime/types';
-import type { ChatMessage, ImageAttachment } from '../../../core/types';
+import type { ChatMessage } from '../../../core/types';
 import { appendBrowserContext } from '../../../utils/browser';
 import { appendCanvasContext } from '../../../utils/canvas';
 import {
@@ -17,7 +17,7 @@ import type { AcpContentBlock } from '../../acp';
 /**
  * What one Reasonix turn says, and the eight pieces of the vault in it.
  *
- * Moved out of `ReasonixChatRuntime` before the flip deleted that file, because a
+ * Kept beside the provider rather than in a runtime class, because a
  * turn composed by the kernel has to say exactly what a turn composed by the
  * runtime said. Byte-identical to Gemini's under a normalized diff, which is
  * what a derivation should look like where nothing is actually different. The order is load-bearing: every appender writes after the
@@ -96,17 +96,11 @@ export function buildReasonixPromptBlocks(
   const text = request.orchestratorMode === true || options.orchestratorMode === true
     ? applyOrchestratorModeInstructions(prompt)
     : prompt;
-  const blocks: AcpContentBlock[] = [{ text, type: 'text' }];
-  for (const image of request.images ?? []) {
-    blocks.push(toAcpImage(image));
-  }
-  return blocks;
-}
-
-function toAcpImage(image: ImageAttachment): AcpContentBlock {
-  return {
-    data: image.data,
-    mimeType: image.mediaType,
-    type: 'image',
-  };
+  // **Text only, because the agent said so.** The recorded handshake answers
+  // `promptCapabilities: { image: false }`, and the module declares
+  // `imageAttachments: 'unsupported'` on the strength of it. Devin's builder
+  // appends an image block per attachment; carrying that over would send this
+  // agent a block type it told us it does not take, and the composer does not
+  // offer attachments here anyway.
+  return [{ text, type: 'text' }];
 }

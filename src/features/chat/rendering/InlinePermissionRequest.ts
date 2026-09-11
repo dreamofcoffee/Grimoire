@@ -221,7 +221,7 @@ export class InlinePermissionRequest {
     if (this.resolved) return;
 
     if (event.key === 'Enter') {
-      const option = this.findOption('allow');
+      const option = this.findUniqueOption('allow');
       if (option) {
         event.preventDefault();
         event.stopPropagation();
@@ -231,7 +231,7 @@ export class InlinePermissionRequest {
     }
 
     if (event.key === 'a' || event.key === 'A') {
-      const option = this.findOption('always');
+      const option = this.findUniqueOption('always');
       if (option) {
         event.preventDefault();
         event.stopPropagation();
@@ -257,8 +257,21 @@ export class InlinePermissionRequest {
     }
   }
 
-  private findOption(action: PermissionAction): ApprovalDecisionOption | undefined {
-    return this.config.decisionOptions.find(option => this.getAction(option) === action);
+  /**
+   * The option a one-key shortcut may commit, and nothing when there are two.
+   *
+   * **A shortcut must not choose between answers.** `Enter` and `a` exist for
+   * the ordinary card, where one option allows and one rejects. Reasonix's
+   * `ask` tool arrives on the same channel as a permission with four distinct
+   * `allow_once` answers — probed 2026-09-09 — and a `find` would hand the
+   * agent answer one of four as the person's considered choice, unrecoverably,
+   * for the most habitual keypress there is. Every option is still reachable by
+   * its own number, which the card draws.
+   */
+  private findUniqueOption(action: PermissionAction): ApprovalDecisionOption | undefined {
+    const matching = this.config.decisionOptions
+      .filter(option => this.getAction(option) === action);
+    return matching.length === 1 ? matching[0] : undefined;
   }
 
   private getAction(option: ApprovalDecisionOption): PermissionAction {

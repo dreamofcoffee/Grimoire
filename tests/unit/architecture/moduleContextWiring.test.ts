@@ -48,6 +48,7 @@ const CONTEXTS: ReadonlyArray<{ providerId: string; path: string; notWired: numb
   { providerId: 'opencode', path: 'src/providers/opencode/app/OpencodeModuleContext.ts', notWired: 1 },
   { providerId: 'qwen', path: 'src/providers/qwen/app/QwenModuleContext.ts', notWired: 0 },
   { providerId: 'devin', path: 'src/providers/devin/app/DevinModuleContext.ts', notWired: 0 },
+  { providerId: 'reasonix', path: 'src/providers/reasonix/app/ReasonixModuleContext.ts', notWired: 0 },
 ];
 
 /**
@@ -110,6 +111,7 @@ describe('provider module context wiring', () => {
       'opencode: 1',
       'qwen: 0',
       'devin: 0',
+      'reasonix: 0',
     ]);
   });
 
